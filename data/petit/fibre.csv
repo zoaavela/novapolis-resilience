@@ -1,0 +1,15 @@
+u,v,cost,statut
+C1,Q1,3,disponible
+C1,Q2,5,disponible
+Q1,Q2,2,disponible
+Q1,H1,4,disponible
+Q2,Q3,3,disponible
+Q3,H1,4,disponible
+H1,E1,6,disponible
+Q3,E1,7,disponible
+E1,T1,2,disponible
+T1,C2,3,disponible
+C2,Q4,5,disponible
+Q4,Q5,4,disponible
+T1,Q4,8,disponible
+Q5,E1,9,indisponible

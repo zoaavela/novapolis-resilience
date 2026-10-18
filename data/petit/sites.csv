@@ -1,0 +1,11 @@
+id,nom,type,longitude,latitude
+C1,Caserne Nord,caserne,1.20,4.80
+C2,Caserne Est,caserne,8.60,4.40
+H1,Hôpital Central,hopital,4.10,3.20
+E1,École des Tilleuls,ecole,6.00,4.90
+T1,Centre télécom,telecom,7.30,3.10
+Q1,Quartier des Halles,quartier,2.40,4.10
+Q2,Quartier du Port,quartier,2.10,2.30
+Q3,Quartier des Forges,quartier,3.60,1.40
+Q4,Quartier des Vignes,quartier,8.90,1.80
+Q5,Quartier du Moulin,quartier,9.80,0.60

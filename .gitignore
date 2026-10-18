@@ -1,0 +1,22 @@
+# Secrets : jamais dans le dépôt
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Front
+node_modules/
+frontend/dist/
+
+# Résultats régénérables
+resultats/
+*.log
+.DS_Store
