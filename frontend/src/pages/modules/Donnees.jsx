@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Espace, Erreur, Selecteur } from '../../components/Blocs.jsx';
 import Plan from '../../components/Plan.jsx';
+import { modeFactice } from '../../api.js';
 
 const TAILLE_MAX = 1024 * 1024; // 1 Mo, vérifié aussi côté serveur
 
@@ -44,7 +45,7 @@ export default function Donnees({ reseau, jeu, setJeu }) {
       commandes={
         <div className="formulaire">
           <Selecteur id="do-jeu" label="Jeu de données" valeur={jeu} onChange={setJeu}
-            options={[['petit', 'Petite ville, 10 sites'], ['ville', 'Novapolis, 100 sites (bientôt)', true]]} />
+            options={[['petit', 'Petite ville, 10 sites'], modeFactice ? ['ville', 'Novapolis, 100 sites (avec l’API)', true] : ['ville', 'Novapolis, 100 sites']]} />
           <form onSubmit={envoyer} className="formulaire" noValidate>
             <div className="champ">
               <label htmlFor="do-fichier">Vérifier un fichier CSV</label>

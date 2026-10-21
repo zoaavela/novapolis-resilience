@@ -8,7 +8,7 @@ import {
 
 const ALGOS = [['dijkstra', 'Dijkstra'], ['bellman-ford', 'Bellman'], ['floyd-warshall', 'Floyd']];
 
-export default function Itineraire({ reseau }) {
+export default function Itineraire({ reseau, jeu }) {
   const casernes = reseau.sites.filter((s) => s.type === 'caserne');
   const scenarios = reseau.scenarios.filter((s) => s.reseau === 'routes');
   const [source, setSource] = useState(casernes[0]?.id);
@@ -27,7 +27,7 @@ export default function Itineraire({ reseau }) {
       return;
     }
     setErreurForm(null);
-    lancer(() => itineraire({ scenario, source, cible, algo }));
+    lancer(() => itineraire({ jeu, scenario, source, cible, algo }));
   }
 
   return (
@@ -51,7 +51,7 @@ export default function Itineraire({ reseau }) {
       titrePlan="Plan de la ville"
       badge={sc?.fermes ? sc.nom : null}
       plan={
-        <Plan reseau={reseau} chemin={donnees?.chemin} fermes={sc?.fermes ?? []}
+        <Plan reseau={reseau} chemin={donnees?.chemin} fermes={sc?.fermes ?? []} pointe={sc?.nom === 'Heure de pointe'}
           isoles={donnees && !donnees.accessible ? [cible] : []}
           description={donnees?.chemin ? `Trajet ${donnees.chemin.join(' puis ')}` : 'Plan de la ville'} />
       }

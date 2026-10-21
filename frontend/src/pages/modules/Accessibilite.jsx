@@ -6,7 +6,7 @@ import {
   Chargement, Erreur, Espace, Legende, Selecteur, Tuile, Vide,
 } from '../../components/Blocs.jsx';
 
-export default function Accessibilite({ reseau }) {
+export default function Accessibilite({ reseau, jeu }) {
   const casernes = reseau.sites.filter((s) => s.type === 'caserne');
   const scenarios = reseau.scenarios.filter((s) => s.reseau === 'routes');
   const [choisies, setChoisies] = useState(casernes.map((c) => c.id));
@@ -26,7 +26,7 @@ export default function Accessibilite({ reseau }) {
       return;
     }
     setErreurForm(null);
-    lancer(() => accessibilite({ scenario, sources: choisies }));
+    lancer(() => accessibilite({ jeu, scenario, sources: choisies }));
   }
 
   const total = reseau.sites.length;

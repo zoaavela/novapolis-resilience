@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import csv
 import itertools
+import json
 import math
 import random
 from pathlib import Path
@@ -186,6 +187,14 @@ def generer_ville(dossier: str | Path, graine: int = 42) -> dict[str, int]:
     scenarios.append({"scenario": "S3", "reseau": "routes", "u": "*", "v": "*", "action": "pointe", "valeur": ""})
 
     _ecrire_jeu(dossier, sites, routes, fibre, demandes, scenarios)
+
+    # --- Décor pour le site web : le tracé de la rivière (aucun effet sur les calculs)
+    milieu = (RIVIERE_APRES_COLONNE * 2.0 + (RIVIERE_APRES_COLONNE + 1) * 2.0 + 0.8) / 2
+    haut = (LIGNES - 1) * 1.3 + 0.8
+    trace = [[round(milieu + 0.15 * math.sin(i * 0.9), 2), round(-0.8 + i * (haut + 0.8) / 20, 2)] for i in range(21)]
+    with open(dossier / "decor.json", "w", encoding="utf-8") as f:
+        json.dump({"nom": "La Novelle", "riviere": trace}, f, ensure_ascii=False)
+
     return {"sites": len(sites), "routes": len(routes), "fibre": len(fibre), "demandes": len(demandes)}
 
 

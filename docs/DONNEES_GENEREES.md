@@ -21,6 +21,8 @@ Fibre : voisins de grille et 35 % des diagonales, coût proportionnel à la long
 
 20 demandes d'intervention sur des quartiers et des écoles.
 
+Le générateur écrit aussi `decor.json` : le tracé de la rivière (la Novelle), utilisé seulement par le site pour dessiner l'eau. Il n'entre dans aucun calcul.
+
 Scénarios : S1 ferme l'avenue autour du pont central (6 arcs), S2 coupe un tronçon de fibre de l'hôpital H1, S3 passe en heure de pointe.
 
 Résultat avec la graine 42 : 100 sites, 342 arcs ouverts, 221 tronçons disponibles, tous les sites atteignables depuis les casernes. S1 ralentit 3 sites de 3 minutes au plus : les casernes des deux rives compensent, ce qui est un résultat à commenter dans le rapport.

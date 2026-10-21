@@ -6,7 +6,7 @@ import {
   Chargement, Erreur, Espace, Legende, Segments, Selecteur, Tuile, Vide,
 } from '../../components/Blocs.jsx';
 
-export default function Fibre({ reseau }) {
+export default function Fibre({ reseau, jeu }) {
   const pannes = reseau.scenarios.filter((s) => s.reseau === 'fibre');
   const [algo, setAlgo] = useState('kruskal');
   const [panne, setPanne] = useState('aucune');
@@ -17,7 +17,7 @@ export default function Fibre({ reseau }) {
     <Espace
       titreCommandes="Fibre"
       commandes={
-        <form className="formulaire" onSubmit={(e) => { e.preventDefault(); lancer(() => fibre({ algo, panne: tronconPanne })); }}>
+        <form className="formulaire" onSubmit={(e) => { e.preventDefault(); lancer(() => fibre({ jeu, algo, panne: tronconPanne })); }}>
           <Segments legende="Algorithme" valeur={algo} onChange={setAlgo} options={[['kruskal', 'Kruskal'], ['prim', 'Prim']]} />
           <Selecteur id="fi-panne" label="Panne" valeur={panne} onChange={setPanne}
             options={[['aucune', 'Aucune panne'], ...pannes.map((p) => [p.id, p.nom])]} />

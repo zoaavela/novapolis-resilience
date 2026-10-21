@@ -16,7 +16,7 @@ function retard(d) {
   return { texte: `+${Math.round((r / d.avant) * 100)} %`, alerte: false };
 }
 
-export default function Scenarios({ reseau }) {
+export default function Scenarios({ reseau, jeu }) {
   const choix = reseau.scenarios.filter((s) => s.reseau === 'routes' && s.id !== 'S0');
   const [scenario, setScenario] = useState(choix[0]?.id);
   const [algo, setAlgo] = useState('dijkstra');
@@ -33,7 +33,7 @@ export default function Scenarios({ reseau }) {
     <Espace
       titreCommandes="Scénario"
       commandes={
-        <form className="formulaire" onSubmit={(e) => { e.preventDefault(); lancer(() => impactScenario({ scenario, algo })); }}>
+        <form className="formulaire" onSubmit={(e) => { e.preventDefault(); lancer(() => impactScenario({ jeu, scenario, algo })); }}>
           <Selecteur id="sc-choix" label="Perturbation" valeur={scenario} onChange={setScenario}
             options={choix.map((s) => [s.id, s.nom])} />
           <Segments legende="Algorithme" valeur={algo} onChange={setAlgo} options={ALGOS} />

@@ -264,11 +264,15 @@ a:hover {
   height: auto;
 }
 .plan-etiquette {
+  paint-order: stroke;
+  stroke: var(--prairie);
+  stroke-width: 4px;
+  stroke-linejoin: round;
   font-family: var(--chiffres);
   font-size: 13px;
   font-weight: 600;
   fill: var(--nuit);
-  text-anchor: middle;
+  dominant-baseline: central;
 }
 .plan-etiquette-alerte {
   fill: var(--rouge-texte);
@@ -1195,5 +1199,154 @@ tbody tr:last-child th {
   }
   .tuile-valeur {
     font-size: 26px;
+  }
+}
+
+/* Barre d'outils du plan : interrupteur des poids et zoom */
+.plan-cadre {
+  position: relative;
+}
+.plan-outils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 2px solid var(--nuit);
+  background: var(--blanc);
+}
+.interrupteur {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.interrupteur input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.interrupteur-piste {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--gris-ligne);
+  border: 2px solid var(--nuit);
+  position: relative;
+  transition: background 0.2s;
+  flex: none;
+}
+.interrupteur-bouton {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--blanc);
+  border: 2px solid var(--nuit);
+  box-sizing: border-box;
+  transition: transform 0.2s;
+}
+.interrupteur input:checked + .interrupteur-piste {
+  background: var(--vert);
+}
+.interrupteur input:checked + .interrupteur-piste .interrupteur-bouton {
+  transform: translateX(20px);
+}
+.interrupteur input:focus-visible + .interrupteur-piste {
+  outline: 3px solid var(--jaune);
+  outline-offset: 2px;
+}
+.plan-zoom {
+  display: flex;
+  gap: 6px;
+}
+.plan-zoom button {
+  font-family: var(--chiffres);
+  font-size: 15px;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--blanc);
+  color: var(--nuit);
+  border: 2px solid var(--nuit);
+  cursor: pointer;
+}
+.plan-zoom button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.plan-poids {
+  pointer-events: none;
+}
+.plan-poids rect {
+  fill: var(--blanc);
+  stroke: #9e9bb8;
+  stroke-width: 1px;
+}
+.plan-poids text {
+  font-family: var(--chiffres);
+  font-weight: 700;
+  fill: var(--nuit);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.plan-zoome {
+  cursor: grab;
+  touch-action: none;
+}
+.plan-astuce {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--nuit-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .interrupteur-piste,
+  .interrupteur-bouton {
+    transition: none;
+  }
+}
+.plan {
+  user-select: none;
+}
+.plan-plein {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--prairie);
+  display: flex;
+  flex-direction: column;
+}
+.plan-plein .plan {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}
+.plan-riviere {
+  font-family: var(--titre);
+  font-size: 18px;
+  fill: #2f78b5;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--prairie);
+  stroke-width: 4px;
+}
+.nv-courant {
+  animation: nv-courant 6s linear infinite;
+}
+@keyframes nv-courant {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nv-courant {
+    animation: none;
   }
 }
