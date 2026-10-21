@@ -43,7 +43,7 @@ export default function Gabarit() {
           <Link to="/credits">Crédits</Link>
           <Link to="/mentions-legales">Mentions légales</Link>
           <a href="https://github.com/zoaavela/novapolis-resilience">Code source</a>
-          <a href="mailto:[ADRESSE DE CONTACT]">Contact</a>
+          <a href="mailto:enzooabdi@gmail.com">Contact</a>
         </nav>
       </footer>
     </div>
