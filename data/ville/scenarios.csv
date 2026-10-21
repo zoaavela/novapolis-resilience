@@ -1,0 +1,9 @@
+scenario,reseau,u,v,action,valeur
+S1,routes,Q47,Q48,fermer,
+S1,routes,Q48,Q47,fermer,
+S1,routes,Q48,Q49,fermer,
+S1,routes,Q49,Q48,fermer,
+S1,routes,Q49,Q50,fermer,
+S1,routes,Q50,Q49,fermer,
+S2,fibre,Q37,H2,panne,
+S3,routes,*,*,pointe,

@@ -1,0 +1,101 @@
+id,nom,type,longitude,latitude
+Q1,Quartier des Halles,quartier,-0.23,11.97
+T1,Centre télécom 1,telecom,2.3,11.59
+Q2,Quartier du Port,quartier,4.12,11.64
+Q3,Quartier des Forges,quartier,6.33,11.68
+Q4,Quartier des Vignes,quartier,7.81,11.55
+Q5,Quartier du Moulin,quartier,10.85,11.56
+Q6,Quartier des Tilleuls,quartier,12.87,11.94
+Q7,Quartier de la Gare,quartier,14.72,11.53
+Q8,Quartier du Marché,quartier,17.2,11.71
+Q9,Quartier du Canal,quartier,18.47,11.43
+Q10,Quartier des Remparts,quartier,-0.31,10.48
+C1,Caserne 1,caserne,2.23,10.35
+Q11,Quartier des Prés,quartier,3.65,10.33
+Q12,Quartier de la Bastide,quartier,6.4,10.42
+Q13,Quartier de la Verrerie,quartier,8.38,10.62
+Q14,Quartier de la Corderie,quartier,10.41,10.53
+T2,Centre télécom 2,telecom,12.95,10.42
+Q15,Quartier des Tanneurs,quartier,14.61,10.48
+Q16,Quartier des Oliviers,quartier,16.49,10.36
+Q17,Quartier de la Chapelle,quartier,18.76,10.67
+Q18,Quartier du Plateau,quartier,0.3,8.96
+Q19,Quartier de l’Écluse,quartier,2.0,8.91
+Q20,Quartier des Carrières,quartier,4.33,9.32
+Q21,Quartier des Halles Nord,quartier,5.84,9.18
+Q22,Quartier du Port Nord,quartier,8.09,8.89
+Q23,Quartier des Forges Nord,quartier,11.01,9.12
+Q24,Quartier des Vignes Nord,quartier,13.02,9.12
+E1,École 1,ecole,14.4,8.99
+C2,Caserne 2,caserne,16.42,9.36
+Q25,Quartier du Moulin Nord,quartier,19.1,9.3
+Q26,Quartier des Tilleuls Nord,quartier,-0.15,7.53
+Q27,Quartier de la Gare Nord,quartier,2.3,8.07
+Q28,Quartier du Marché Nord,quartier,3.67,7.79
+Q29,Quartier du Canal Nord,quartier,5.66,7.96
+Q30,Quartier des Remparts Nord,quartier,8.21,7.58
+E2,École 2,ecole,10.78,7.83
+Q31,Quartier des Prés Nord,quartier,12.61,8.02
+Q32,Quartier de la Bastide Nord,quartier,14.74,7.63
+Q33,Quartier de la Verrerie Nord,quartier,16.83,7.94
+Q34,Quartier de la Corderie Nord,quartier,18.56,7.69
+Q35,Quartier des Tanneurs Nord,quartier,0.4,6.59
+Q36,Quartier des Oliviers Nord,quartier,1.95,6.51
+Q37,Quartier de la Chapelle Nord,quartier,3.7,6.33
+Q38,Quartier du Plateau Nord,quartier,5.87,6.55
+Q39,Quartier de l’Écluse Nord,quartier,7.78,6.33
+Q40,Quartier des Carrières Nord,quartier,10.46,6.58
+H1,Hôpital 1,hopital,12.58,6.74
+Q41,Quartier des Halles Sud,quartier,15.09,6.24
+Q42,Quartier du Port Sud,quartier,16.59,6.6
+Q43,Quartier des Forges Sud,quartier,18.57,6.28
+Q44,Quartier des Vignes Sud,quartier,0.35,5.24
+Q45,Quartier du Moulin Sud,quartier,1.98,5.37
+Q46,Quartier des Tilleuls Sud,quartier,4.25,5.01
+H2,Hôpital 2,hopital,5.68,5.16
+Q47,Quartier de la Gare Sud,quartier,7.94,5.18
+Q48,Quartier du Marché Sud,quartier,10.98,5.3
+Q49,Quartier du Canal Sud,quartier,13.19,4.96
+Q50,Quartier des Remparts Sud,quartier,14.72,5.1
+Q51,Quartier des Prés Sud,quartier,17.09,5.05
+Q52,Quartier de la Bastide Sud,quartier,18.55,5.17
+Q53,Quartier de la Verrerie Sud,quartier,-0.06,3.77
+Q54,Quartier de la Corderie Sud,quartier,1.8,4.15
+Q55,Quartier des Tanneurs Sud,quartier,3.95,4.12
+E3,École 3,ecole,6.04,3.63
+Q56,Quartier des Oliviers Sud,quartier,8.4,4.1
+E4,École 4,ecole,11.18,4.16
+E5,École 5,ecole,13.08,3.7
+Q57,Quartier de la Chapelle Sud,quartier,14.79,3.73
+Q58,Quartier du Plateau Sud,quartier,16.72,3.64
+Q59,Quartier de l’Écluse Sud,quartier,18.7,4.19
+Q60,Quartier des Carrières Sud,quartier,-0.19,2.77
+T3,Centre télécom 3,telecom,1.96,2.55
+Q61,Quartier des Halles Est,quartier,4.37,2.9
+Q62,Quartier du Port Est,quartier,6.04,2.73
+E6,École 6,ecole,7.72,2.48
+Q63,Quartier des Forges Est,quartier,11.17,2.65
+Q64,Quartier des Vignes Est,quartier,12.83,2.75
+C3,Caserne 3,caserne,14.45,2.65
+Q65,Quartier du Moulin Est,quartier,16.8,2.81
+Q66,Quartier des Tilleuls Est,quartier,18.53,2.88
+Q67,Quartier de la Gare Est,quartier,-0.34,1.11
+Q68,Quartier du Marché Est,quartier,2.08,1.41
+C4,Caserne 4,caserne,3.79,1.07
+Q69,Quartier du Canal Est,quartier,6.31,1.15
+Q70,Quartier des Remparts Est,quartier,8.08,1.37
+Q71,Quartier des Prés Est,quartier,10.74,1.35
+Q72,Quartier de la Bastide Est,quartier,12.82,1.56
+Q73,Quartier de la Verrerie Est,quartier,14.56,1.43
+Q74,Quartier de la Corderie Est,quartier,16.59,1.24
+Q75,Quartier des Tanneurs Est,quartier,18.94,1.18
+Q76,Quartier des Oliviers Est,quartier,-0.15,0.15
+Q77,Quartier de la Chapelle Est,quartier,1.66,-0.03
+Q78,Quartier du Plateau Est,quartier,4.4,0.3
+Q79,Quartier de l’Écluse Est,quartier,5.66,-0.17
+Q80,Quartier des Carrières Est,quartier,7.81,0.26
+Q81,Quartier des Halles Ouest,quartier,11.1,0.23
+Q82,Quartier du Port Ouest,quartier,12.7,-0.21
+Q83,Quartier des Forges Ouest,quartier,15.07,0.12
+Q84,Quartier des Vignes Ouest,quartier,16.89,0.29
+Q85,Quartier du Moulin Ouest,quartier,18.92,-0.3

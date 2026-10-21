@@ -62,6 +62,14 @@ def cmd_arbre(args) -> None:
         print(f"{u} - {v} : {w:g}")
     print(f"Coût total : {r.cout_total:g}, {len(r.composantes)} composante(s)")
 
+def cmd_generer(args) -> None:
+    from novapolis import generateur
+
+    if args.type == "ville":
+        comptes = generateur.generer_ville(args.sortie, graine=args.graine)
+    else:
+        comptes = generateur.generer_aleatoire(args.sortie, n=args.n, degre=args.degre, graine=args.graine)
+    print(f"Écrit dans {args.sortie} : {comptes}")
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="novapolis")
@@ -88,6 +96,14 @@ def main() -> None:
     s.add_argument("--donnees", required=True)
     s.add_argument("--algo", choices=["kruskal", "prim"], default="kruskal")
     s.set_defaults(func=cmd_arbre)
+
+    s = sous.add_parser("generer", help="générer un jeu de données synthétique")
+    s.add_argument("--type", choices=["ville", "aleatoire"], required=True)
+    s.add_argument("--sortie", required=True, help="dossier où écrire les CSV")
+    s.add_argument("--graine", type=int, default=42)
+    s.add_argument("--n", type=int, default=1000, help="nombre de sommets (aleatoire)")
+    s.add_argument("--degre", type=int, default=4, help="voisins par sommet (aleatoire)")
+    s.set_defaults(func=cmd_generer)
 
     args = p.parse_args()
     try:
