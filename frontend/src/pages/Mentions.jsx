@@ -1,8 +1,5 @@
 import { useTitre } from '../hooks.js';
 
-// Les champs entre crochets sont À COMPLÉTER avec de vraies informations
-// avant la mise en ligne. Ne pas les inventer.
-
 export default function Mentions() {
   useTitre('Mentions légales', 'Mentions légales du site Novapolis.');
   return (
@@ -13,13 +10,13 @@ export default function Mentions() {
         <h2>Éditeur</h2>
         <p>
           Site réalisé dans le cadre d’un projet étudiant d’algorithmique et théorie des graphes,
-          par Enzo [NOM], Elio Chalhoub et Max [NOM], [NOM DE L’ÉCOLE].
-          Contact : [ADRESSE DE CONTACT].
+          par Enzo Abdi, Elio Chalhoub et Max Soumahoro, EFREI Paris.
+          Contact : enzooabdi@gmail.com
         </p>
 
         <h2>Hébergement</h2>
-        <p>Site : [NOM, ADRESSE ET TÉLÉPHONE DE L’HÉBERGEUR DU FRONT].</p>
-        <p>API : [NOM, ADRESSE ET TÉLÉPHONE DE L’HÉBERGEUR DE L’API].</p>
+        <p>Site : Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis. Téléphone : +1 888 993 5273.</p>
+        <p>API : Render Services, Inc., 525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis. Téléphone : +1 415 319 8186.</p>
 
         <h2>Données</h2>
         <p>Novapolis est une ville fictive. Toutes les données affichées sont synthétiques.</p>
