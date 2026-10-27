@@ -9,7 +9,7 @@ client = TestClient(app)
 
 def post(chemin, corps):
     r = client.post(chemin, json=corps)
-    if r.status_code == 501:  # algo d'Elio ou de Max pas encore écrit
+    if r.status_code == 501:  
         pytest.skip("partie pas encore écrite")
     return r
 
@@ -71,3 +71,10 @@ def test_fibre_panne():
     r = post("/fibre", {"panne": ["H1", "E1"]}).json()
     assert r["cout_total"] == 32
     assert r["nouveau_cout"] == 33
+
+
+def test_itineraire_floyd_identique_a_dijkstra():
+    for algo in ["dijkstra", "floyd-warshall"]:
+        r = post("/itineraire", {"source": "C1", "cible": "Q4", "algo": algo}).json()
+        assert r["duree"] == 28
+        assert r["chemin"][0] == "C1" and r["chemin"][-1] == "Q4"

@@ -19,7 +19,9 @@ async function appel(chemin, corps) {
     let message = `Erreur ${reponse.status}`;
     try {
       const d = await reponse.json();
-      if (d.detail) message = d.detail;
+      // FastAPI renvoie soit un texte, soit une liste d'erreurs de validation (422).
+      if (typeof d.detail === 'string') message = d.detail;
+      else if (Array.isArray(d.detail)) message = d.detail.map((e) => e.msg).join(', ');
     } catch {
       /* corps vide */
     }

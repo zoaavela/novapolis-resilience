@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from novapolis import arbres, chemins, donnees, parcours, scenarios
+from novapolis.resultats import Chemin
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="Novapolis Résilience", version="0.2.0")
@@ -70,7 +71,7 @@ DOSSIER_DATA = Path(__file__).resolve().parents[2] / "data"
 # faire lire un autre dossier du serveur en changeant le paramètre.
 JEUX = {"petit": DOSSIER_DATA / "petit", "ville": DOSSIER_DATA / "ville"}
 Jeu = Literal["petit", "ville"]
-Algo = Literal["dijkstra", "bellman-ford"]
+Algo = Literal["dijkstra", "bellman-ford", "floyd-warshall"]
 
 
 class Ville:
@@ -214,17 +215,40 @@ def reseau(jeu: Jeu = "petit") -> dict:
     }
 
 
+def chemin_floyd(resultat, source: str, cible: str) -> Chemin | None:
+    """Reconstruit source -> cible avec la matrice des successeurs de Floyd-Warshall.
+
+    successeurs[u][cible] donne le sommet qui suit u sur le chemin : on avance
+    de proche en proche jusqu'à la cible. None si inatteignable ou si la
+    distance n'est pas finie (circuit absorbant).
+    """
+    d = resultat.distances[source][cible]
+    if not math.isfinite(d):
+        return None
+    sommets = [source]
+    while sommets[-1] != cible:
+        suivant = resultat.successeurs[sommets[-1]][cible]
+        if suivant is None or len(sommets) > len(resultat.distances):
+            return None
+        sommets.append(suivant)
+    return Chemin(sommets=sommets, duree=d)
+
+
 @app.post("/itineraire")
 def itineraire(req: DemandeItineraire) -> dict:
-    """Plus court chemin d'un site à un autre (Dijkstra d'Enzo ou Bellman-Ford d'Elio)."""
+    """Plus court chemin d'un site à un autre (Dijkstra, Bellman-Ford ou Floyd-Warshall)."""
     v = ville(req.jeu)
     verifier_site(v, req.source)
     verifier_site(v, req.cible)
     graphe = routes_du_scenario(v, req.scenario)
 
-    algo = {"dijkstra": chemins.dijkstra, "bellman-ford": chemins.bellman_ford}[req.algo]
-    resultat = algo(graphe, req.source)
-    chemin = chemins.reconstruire_chemin(resultat, req.cible)
+    if req.algo == "floyd-warshall":
+        # Floyd-Warshall calcule toutes les paires d'un coup : on lit la ligne de la source.
+        chemin = chemin_floyd(chemins.floyd_warshall(graphe), req.source, req.cible)
+    else:
+        algo = {"dijkstra": chemins.dijkstra, "bellman-ford": chemins.bellman_ford}[req.algo]
+        resultat = algo(graphe, req.source)
+        chemin = chemins.reconstruire_chemin(resultat, req.cible)
 
     if chemin is None:
         return {"accessible": False, "chemin": None, "duree": None, "nb_arcs": 0, "algo": req.algo}
