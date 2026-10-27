@@ -2,12 +2,12 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import Ciel from './Ciel.jsx';
 
 const MODULES = [
-  ['accessibilite', 'Accessibilité'],
-  ['itineraire', 'Itinéraire'],
+  ['access', 'Accessibilité'],
+  ['route', 'Itinéraire'],
   ['scenarios', 'Scénarios'],
-  ['fibre', 'Fibre'],
-  ['donnees', 'Données'],
-  ['a-propos', 'À propos'],
+  ['fiber', 'Fibre'],
+  ['data', 'Données'],
+  ['about', 'À propos'],
 ];
 
 export { MODULES };
@@ -25,7 +25,7 @@ export default function Gabarit() {
           </Link>
           <nav aria-label="Modules" className="onglets">
             {MODULES.map(([id, nom]) => (
-              <NavLink key={id} to={`/outil/${id}`} className="onglet">
+              <NavLink key={id} to={`/${id}`} className="onglet">
                 {nom}
               </NavLink>
             ))}
@@ -41,7 +41,7 @@ export default function Gabarit() {
         <p>Novapolis est une ville inventée. Toutes les données sont synthétiques.</p>
         <nav aria-label="Liens de bas de page" className="pied-liens">
           <Link to="/credits">Crédits</Link>
-          <Link to="/mentions-legales">Mentions légales</Link>
+          <Link to="/legal">Mentions légales</Link>
           <a href="https://github.com/zoaavela/novapolis-resilience">Code source</a>
           <a href="mailto:enzooabdi@gmail.com">Contact</a>
         </nav>

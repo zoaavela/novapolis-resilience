@@ -15,12 +15,12 @@ export default function Accueil() {
           inventée, puis mesure ce qui casse quand on la perturbe.
         </p>
         <div className="accueil-boutons">
-          <Link to="/outil/scenarios" className="bouton bouton-principal bouton-grand">Ouvrir l’outil</Link>
+          <Link to="/scenarios" className="bouton bouton-principal bouton-grand">Ouvrir l’outil</Link>
           <Link to="/credits" className="bouton-discret">Crédits</Link>
         </div>
       </main>
       <footer className="accueil-pied">
-        <Link to="/mentions-legales">Mentions légales</Link>
+        <Link to="/legal">Mentions légales</Link>
       </footer>
     </div>
   );
