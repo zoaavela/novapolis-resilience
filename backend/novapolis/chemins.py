@@ -1,6 +1,6 @@
 """Module 2 et 3 : plus courts chemins.
 
-Dijkstra : Enzo. Bellman-Ford et Floyd-Warshall : Elio.
+Dijkstra : Enzo. Bellman-Ford, Floyd-Warshall et circuits absorbants : Elio.
 Formats de sortie : voir resultats.py.
 """
 
@@ -9,9 +9,10 @@ from __future__ import annotations
 import heapq
 import math
 from collections import deque
+from itertools import pairwise
 
 from .graphe import Graphe
-from .resultats import Chemin, ResultatChemins, ResultatToutesPaires
+from .resultats import Chemin, ResultatChemins, ResultatCircuit, ResultatToutesPaires
 
 
 def dijkstra(graphe: Graphe, source: str) -> ResultatChemins:
@@ -162,6 +163,87 @@ def floyd_warshall(graphe: Graphe) -> ResultatToutesPaires:
         },
         sommets_sur_circuit_absorbant={sommets[k] for k in sur_circuit},
     )
+
+
+def trouver_circuit_absorbant(graphe: Graphe) -> list[str] | None:
+    """Un circuit absorbant du graphe, où qu'il soit, ou None.
+
+    Bellman-Ford depuis une seule source ne voit pas un circuit qu'elle
+    n'atteint pas. On fait donc comme s'il existait une source fictive reliée
+    à tous les sommets par un arc de poids 0 : toutes les distances partent
+    de 0. S'il reste un arc relâchable au V-ième passage, un circuit existe.
+
+    Pour l'extraire, on remonte V fois les prédécesseurs depuis le dernier
+    sommet relâché : on est alors forcément dans le circuit. On suit ensuite
+    les prédécesseurs jusqu'à revenir au même sommet.
+
+    Complexité : O(V × E).
+    """
+    distances = {s: 0.0 for s in graphe.sommets()}
+    predecesseurs: dict[str, str | None] = {s: None for s in graphe.sommets()}
+    arcs = _arcs_orientes(graphe)
+    dernier = None
+    for _ in range(graphe.nb_sommets):
+        dernier = None
+        for u, v, w in arcs:
+            if distances[u] + w < distances[v]:
+                distances[v] = distances[u] + w
+                predecesseurs[v] = u
+                dernier = v
+        if dernier is None:
+            return None
+
+    sommet = dernier
+    for _ in range(graphe.nb_sommets):
+        sommet = predecesseurs[sommet]
+    circuit = [sommet]
+    courant = predecesseurs[sommet]
+    while courant != sommet:
+        circuit.append(courant)
+        courant = predecesseurs[courant]
+    circuit.append(sommet)
+    circuit.reverse()
+    return circuit
+
+
+def diagnostiquer_circuit(graphe: Graphe, source: str | None = None) -> ResultatCircuit:
+    """Module 3 : un circuit absorbant existe-t-il, et la source l'atteint-elle ?
+
+    Deux questions différentes. L'existence se teste sur tout le graphe avec
+    ``trouver_circuit_absorbant``. L'accessibilité se lit sur Bellman-Ford
+    lancé depuis la source. Un circuit peut exister sans être accessible :
+    les distances depuis la source restent alors finies et justes.
+    """
+    if source is not None:
+        resultat = bellman_ford(graphe, source)
+        if resultat.circuit_absorbant:
+            atteints = {s for s, d in resultat.distances.items() if d != math.inf}
+            circuit = trouver_circuit_absorbant(_sous_graphe(graphe, atteints))
+            non_bornes = {s for s, d in resultat.distances.items() if d == -math.inf}
+            return ResultatCircuit(True, circuit, _poids(graphe, circuit), source, True, non_bornes)
+
+    circuit = trouver_circuit_absorbant(graphe)
+    if circuit is None:
+        return ResultatCircuit(False, None, None, source, None if source is None else False)
+    return ResultatCircuit(
+        True, circuit, _poids(graphe, circuit), source, None if source is None else False
+    )
+
+
+def _sous_graphe(graphe: Graphe, garder: set[str]) -> Graphe:
+    """Copie restreinte aux sommets atteints depuis la source."""
+    g = Graphe(oriente=graphe.oriente)
+    for s in graphe.sommets():
+        if s in garder:
+            g.ajouter_sommet(s, **graphe.infos(s))
+    for u, v, w in graphe.arcs():
+        if u in garder and v in garder:
+            g.ajouter_arc(u, v, w)
+    return g
+
+
+def _poids(graphe: Graphe, circuit: list[str]) -> float:
+    return sum(graphe.poids(a, b) for a, b in pairwise(circuit))
 
 
 def _arcs_orientes(graphe: Graphe) -> list[tuple[str, str, float]]:

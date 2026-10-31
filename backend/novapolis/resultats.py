@@ -36,6 +36,23 @@ class ResultatToutesPaires:
 
 
 @dataclass
+class ResultatCircuit:
+    """Module 3 : diagnostic de circuit absorbant."""
+
+    existe: bool
+    """True si le graphe contient au moins un circuit absorbant, où qu'il soit."""
+    circuit: list[str] | None
+    """Sommets du circuit, le premier répété à la fin (A, B, C, A). None si aucun."""
+    poids: float | None
+    """Somme des poids du circuit, toujours négative quand il existe."""
+    source: str | None
+    accessible_depuis_source: bool | None
+    """None si aucune source n'est donnée."""
+    sommets_non_bornes: set[str] = field(default_factory=set)
+    """Sommets à -inf depuis la source."""
+
+
+@dataclass
 class ResultatArbre:
     """Arbre (ou forêt) couvrant minimal : Kruskal, Prim."""
 
