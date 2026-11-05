@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { fermeture, impactScenario, modeFactice } from '../../api.js';
-import { useRequete } from '../../hooks.js';
+import { useCalculAuto } from '../../hooks.js';
 import Plan from '../../components/Plan.jsx';
 import {
-  Chargement, Erreur, Espace, Legende, LEGENDE_ROUTES, Segments, Selecteur, Tuile, Vide, minutes,
+  Chargement, Erreur, Espace, Legende, LEGENDE_ROUTES, Segments, Selecteur, Tuile, minutes,
 } from '../../components/Blocs.jsx';
 
 const ALGOS = [['dijkstra', 'Dijkstra'], ['bellman-ford', 'Bellman'], ['floyd-warshall', 'Floyd']];
 const MODES = [['fichier', 'Scénarios prévus'], ['main', 'Fermer des routes']];
 const MAX_ARCS = 20; // limite vérifiée aussi par l'API
+
 
 function retard(d) {
   if (d.apres === null && d.avant !== null) return { texte: 'coupé', alerte: true };
@@ -111,37 +112,21 @@ export default function Scenarios({ reseau, jeu }) {
 
   // Mode « scénarios prévus » : ceux du fichier scenarios.csv
   const [scenario, setScenario] = useState(choix[0]?.id);
-  const [prevu, lancerPrevu] = useRequete();
   const sc = reseau.scenarios.find((s) => s.id === scenario);
+  const pointe = sc?.nom === 'Heure de pointe';
+  const prevu = useCalculAuto(() => impactScenario({ jeu, scenario, algo }), [scenario, algo, jeu], mode === 'fichier');
 
   // Mode « fermer des routes » : arcs fermés à la main sur le plan
   const [fermes, setFermes] = useState([]);
   const [source, setSource] = useState(casernes[0]?.id);
   const [cible, setCible] = useState(reseau.sites.at(-1)?.id);
-  // État de la requête du mode « à la main ». Contrairement à useRequete, on garde
-  // le résultat précédent pendant un recalcul, pour que la page ne saute pas.
-  const [main, setMain] = useState({ chargement: false, donnees: null, erreur: null });
-  const [alerte, setAlerte] = useState(null);
+  const main = useCalculAuto(
+    () => fermeture({ jeu, fermes, algo, source, cible: source === cible ? null : cible }),
+    [fermes, algo, source, cible, jeu],
+    mode === 'main' && !modeFactice,
+  );
   const donneesMain = main.donnees;
-
-  // Recalcul automatique, 400 ms après le dernier clic : pas une requête par clic.
-  useEffect(() => {
-    if (mode !== 'main' || modeFactice) return undefined;
-    let annule = false; // une réponse arrivée après un nouveau clic est ignorée
-    const minuteur = setTimeout(async () => {
-      setMain((m) => ({ ...m, chargement: true, erreur: null }));
-      try {
-        const donnees = await fermeture({ jeu, fermes, algo, source, cible: source === cible ? null : cible });
-        if (!annule) setMain({ chargement: false, donnees, erreur: null });
-      } catch (e) {
-        if (!annule) setMain({ chargement: false, donnees: null, erreur: e.message || 'Erreur inconnue' });
-      }
-    }, 400);
-    return () => {
-      annule = true;
-      clearTimeout(minuteur);
-    };
-  }, [mode, fermes, algo, source, cible, jeu]);
+  const [alerte, setAlerte] = useState(null);
 
   const estFerme = (u, v) => fermes.some(([a, b]) => a === u && b === v);
 
@@ -171,19 +156,22 @@ export default function Scenarios({ reseau, jeu }) {
   const actif = mode === 'fichier' ? prevu : main;
   const lignes = actif.donnees?.demandes ?? [];
   const isoles = lignes.filter((d) => d.apres === null).map((d) => d.site);
-  const fermesPlan = mode === 'fichier' ? (prevu.donnees ? sc?.fermes ?? [] : []) : fermes;
+  const fermesPlan = mode === 'fichier' ? sc?.fermes ?? [] : fermes;
   const cheminPlan = mode === 'main' ? donneesMain?.trajet?.apres?.chemin ?? null : null;
 
   const commandesFichier = (
-    <form className="formulaire" onSubmit={(e) => { e.preventDefault(); lancerPrevu(() => impactScenario({ jeu, scenario, algo })); }}>
+    <div className="formulaire">
       <Selecteur id="sc-choix" label="Perturbation" valeur={scenario} onChange={setScenario}
         options={choix.map((s) => [s.id, s.nom])} />
       <Segments legende="Algorithme" valeur={algo} onChange={setAlgo} options={ALGOS} />
-      <button type="submit" className="bouton bouton-principal" disabled={prevu.chargement}>
-        {prevu.chargement ? 'Calcul…' : 'Appliquer'}
-      </button>
-      <p className="aide">Les scénarios du fichier scenarios.csv. Ils s’appliquent à une copie du réseau, la ville d’origine ne change jamais.</p>
-    </form>
+      <p className="aide">
+        {sc?.fermes
+          ? `Routes fermées, barrées en rouge sur le plan : ${sc.fermes.map(([u, v]) => `${u} → ${v}`).join(', ')}.`
+          : pointe ? 'Tous les temps passent à ceux de l’heure de pointe, affichés sur le plan.' : ''}
+        {' '}L’impact se recalcule dès que vous changez de perturbation ou d’algorithme.
+      </p>
+      <p className="aide">Scénarios du fichier scenarios.csv, appliqués à une copie du réseau : la ville d’origine ne change jamais.</p>
+    </div>
   );
 
   const commandesMain = (
@@ -228,27 +216,25 @@ export default function Scenarios({ reseau, jeu }) {
         </>
       }
       titrePlan="Plan de la ville"
-      badge={mode === 'fichier' && prevu.donnees && sc?.fermes ? sc.nom : mode === 'main' && fermes.length ? `${routesFermees.length} fermée${routesFermees.length > 1 ? 's' : ''}` : null}
+      badge={mode === 'fichier' && sc ? sc.nom : mode === 'main' && fermes.length ? `${routesFermees.length} fermée${routesFermees.length > 1 ? 's' : ''}` : null}
       plan={
         <Plan
           reseau={reseau}
           fermes={fermesPlan}
           isoles={isoles}
           chemin={cheminPlan}
+          pointe={mode === 'fichier' && pointe}
           surClicRoute={mode === 'main' ? basculerRoute : null}
           description={mode === 'main' ? 'Plan de la ville : cliquez sur une route pour la fermer' : 'Plan de la ville'}
         />
       }
-      legende={<Legende elements={LEGENDE_ROUTES} />}
+      legende={<Legende elements={mode === 'fichier' && pointe ? [...LEGENDE_ROUTES, ['m-pointe', 'Route ralentie à l’heure de pointe']] : LEGENDE_ROUTES} />}
       resultats={
         <>
           {mode === 'main' && modeFactice && <Erreur>La fermeture à la main demande l’API.</Erreur>}
           {actif.chargement && !actif.donnees && <Chargement />}
           {actif.chargement && actif.donnees && <p className="aide" role="status">Recalcul…</p>}
           {actif.erreur && <Erreur>{actif.erreur}</Erreur>}
-          {mode === 'fichier' && !prevu.chargement && !prevu.erreur && !prevu.donnees && (
-            <Vide>Choisissez une perturbation et appliquez-la pour voir son impact.</Vide>
-          )}
           {mode === 'main' && donneesMain?.trajet && <Comparaison trajet={donneesMain.trajet} />}
           {actif.donnees && <Impact donnees={actif.donnees} />}
         </>

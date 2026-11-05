@@ -196,6 +196,7 @@ export default function Plan({
   isoles = [],
   pointe = false,
   surClicRoute = null, // (u, v, sens) => … : rend les routes cliquables (fermeture à la main)
+  libellePoids = null, // texte de l'interrupteur des poids, s'il faut le changer
   description = 'Plan de la ville de Novapolis',
 }) {
   const nbSites = reseau?.sites.length ?? 0;
@@ -285,9 +286,10 @@ export default function Plan({
   if (mode === 'routes') {
     for (const r of reseau.routes) {
       const kk = cle(r.u, r.v);
-      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], ferme: false, scenario: false, fermeeDonnees: false };
+      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], normal: [], ferme: false, scenario: false, fermeeDonnees: false };
       l.sens.push([r.u, r.v]);
       l.temps.push(pointe ? r.temps_pointe : r.temps_normal);
+      l.normal.push(r.temps_normal);
       if (r.statut !== 'ouvert') {
         l.ferme = true;
         l.fermeeDonnees = true; // fermée dans les données : on ne peut pas la rouvrir ici
@@ -322,7 +324,7 @@ export default function Plan({
         <label className="interrupteur">
           <input type="checkbox" role="switch" checked={voirPoids} onChange={(e) => setVoirPoids(e.target.checked)} />
           <span className="interrupteur-piste" aria-hidden="true"><span className="interrupteur-bouton" /></span>
-          {mode === 'routes' ? `Temps des routes, en min${pointe ? ' (pointe)' : ''}` : 'Coûts de la fibre, en k€'}
+          {libellePoids ?? (mode === 'routes' ? `Temps des routes, en min${pointe ? ' (heure de pointe)' : ''}` : 'Coûts de la fibre, en k€')}
         </label>
         <div className="plan-zoom" role="group" aria-label="Zoom du plan">
           <button type="button" onClick={() => setZoom((z) => borner(z * 1.5, 1, 8))} aria-label="Zoomer">+</button>
@@ -380,11 +382,15 @@ export default function Plan({
             if (kk === repCle) trait = { stroke: '#FFC628', strokeWidth: 6 };
           } else if (l.ferme) {
             trait = { stroke: '#D7262B', strokeWidth: 2.5, strokeDasharray: '7 5' };
+          } else if (pointe && l.temps.some((t, i) => t > l.normal.at(i))) {
+            trait = { stroke: '#E07B00', strokeWidth: 3.5 }; // heure de pointe : route ralentie, en orange
           }
           const fleches = mode === 'routes' && !l.ferme;
           const poids = mode === 'routes' ? [...new Set(l.temps)].join(' / ') : String(l.cout);
           const infobulle = mode === 'routes'
-            ? l.sens.map(([u, v], i) => `${u} → ${v} : ${l.temps[i]} min`).join('\n') + (l.ferme ? '\nfermée' : '')
+            ? l.sens.map(([u, v], i) => (pointe
+              ? `${u} → ${v} : ${l.temps.at(i)} min en pointe (${l.normal.at(i)} min d'habitude, +${Math.round((l.temps.at(i) / l.normal.at(i) - 1) * 100)} %)`
+              : `${u} → ${v} : ${l.temps.at(i)} min`)).join('\n') + (l.ferme ? '\nfermée' : '')
             : `${l.u} – ${l.v} : ${l.cout} k€${l.ferme ? ' (indisponible)' : ''}`;
           const afficherPoids = mode === 'routes'
             ? poidsLisibles
@@ -393,7 +399,7 @@ export default function Plan({
           // Les pastilles sont dessinées plus tard, par-dessus le trajet surligné.
           if (afficherPoids) {
             pastilles.push(
-              <g key={`p-${kk}`} className="plan-poids">
+              <g key={`p-${kk}`} className={pointe && mode === 'routes' && !l.ferme ? 'plan-poids plan-poids-pointe' : 'plan-poids'}>
                 <rect x={mx - largeurPoids / 2} y={my - policePoids * 0.75} width={largeurPoids} height={policePoids * 1.5} rx={3 * taille} />
                 <text x={mx} y={my} style={{ fontSize: policePoids }}>{poids}</text>
               </g>,

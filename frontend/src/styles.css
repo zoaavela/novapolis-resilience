@@ -600,6 +600,7 @@ tbody tr:last-child th {
 .m-arbre { width: 22px; height: 6px; background: var(--vert); border: 0; }
 .m-possible { width: 22px; height: 0; border: 0; border-top: 2px dashed #b8b5cc; }
 .m-ferme { width: 22px; height: 0; border: 0; border-top: 4px dashed var(--rouge); }
+.m-pointe { width: 22px; height: 4px; background: #e07b00; border: 0; }
 
 /* ---------- Accueil plein écran ---------- */
 .accueil-plein {
@@ -1516,4 +1517,28 @@ tbody tr:last-child th {
 }
 .lien-bouton:focus-visible {
   outline: 3px solid var(--jaune);
+}
+.plan-poids-pointe rect {
+  stroke: #e07b00;
+  stroke-width: 1.5px;
+}
+.plan-poids-pointe text {
+  fill: #9a4f00;
+}
+.verdict {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: var(--blanc);
+  border: 2px solid var(--nuit);
+  box-shadow: var(--ombre-petite);
+}
+.verdict p {
+  margin: 0 0 6px;
+}
+.verdict p:last-child {
+  margin-bottom: 0;
+}
+.verdict-alerte {
+  background: var(--rouge-pale);
+  border-color: var(--rouge);
 }

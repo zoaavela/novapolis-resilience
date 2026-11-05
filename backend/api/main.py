@@ -146,7 +146,7 @@ def nom_scenario(sid: str, actions: list[donnees.Action]) -> dict:
     fermes = [[a.u, a.v] for a in actions if a.action == "fermer"]
     pannes = [[a.u, a.v] for a in actions if a.action == "panne"]
     if any(a.action == "pointe" for a in actions):
-        return {"id": sid, "nom": "Heure de pointe", "reseau": "routes"}
+        return {"id": sid, "nom": "Heure de pointe", "reseau": "routes", "pointe": True}
     if pannes:
         u, v = pannes[0]
         return {"id": sid, "nom": f"Panne fibre {u}, {v}", "reseau": "fibre", "panne": pannes[0]}
@@ -183,6 +183,8 @@ class DemandeScenario(BaseModel):
     jeu: Jeu = "petit"
     scenario: str = IdScenario
     algo: Literal["dijkstra", "bellman-ford", "floyd-warshall"] = "dijkstra"
+    source: str | None = Field(default=None, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
+    cible: str | None = Field(default=None, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class DemandeFermeture(BaseModel):
@@ -357,7 +359,22 @@ def impact(v: Ville, graphe_apres, algo: str) -> dict:
 def scenario(req: DemandeScenario) -> dict:
     """Temps d'intervention de chaque demande, avant et après le scénario."""
     v = ville(req.jeu)
-    return impact(v, routes_du_scenario(v, req.scenario), req.algo)
+    graphe = routes_du_scenario(v, req.scenario)
+    reponse = impact(v, graphe, req.algo)
+    ajouter_trajet(reponse, v, graphe, req.algo, req.source, req.cible)
+    return reponse
+
+
+def ajouter_trajet(reponse: dict, v: Ville, graphe, algo: str, source: str | None, cible: str | None) -> None:
+    """Si un départ et une arrivée sont donnés, ajoute le trajet avant et après."""
+    if not (source and cible) or source == cible:
+        return
+    verifier_site(v, source)
+    verifier_site(v, cible)
+    reponse["trajet"] = {
+        "avant": trajet(v.routes_normal, algo, source, cible),
+        "apres": trajet(graphe, algo, source, cible),
+    }
 
 
 def trajet(graphe, algo: str, source: str, cible: str) -> dict:
@@ -388,13 +405,7 @@ def fermeture(req: DemandeFermeture) -> dict:
     graphe = scenarios.appliquer(v.routes_normal, actions, "routes") if actions else v.routes_normal
     reponse = impact(v, graphe, req.algo)
     reponse["fermes"] = [[u, w] for u, w in req.fermes]
-    if req.source and req.cible:
-        verifier_site(v, req.source)
-        verifier_site(v, req.cible)
-        reponse["trajet"] = {
-            "avant": trajet(v.routes_normal, req.algo, req.source, req.cible),
-            "apres": trajet(graphe, req.algo, req.source, req.cible),
-        }
+    ajouter_trajet(reponse, v, graphe, req.algo, req.source, req.cible)
     return reponse
 
 
@@ -451,7 +462,7 @@ DOSSIER_TESTS = DOSSIER_DATA / "tests"
 # Positions pour dessiner les graphes de test (les CSV les mettent tous sur une ligne).
 DISPOSITION = {
     "accessible": {"S": (0, 1), "A": (2, 1), "B": (3.5, 2.2), "C": (3.5, -0.2), "D": (5.5, -0.2)},
-    "non_accessible": {"S": (0, 2), "A": (2, 2), "B": (4, 2), "C": (1, 0), "D": (3, 0), "E": (2, -1.4)},
+    "non_accessible": {"S": (0, 1.2), "A": (2.5, 1.2), "B": (5, 1.2), "C": (1.2, 0), "D": (3.8, 0), "E": (2.5, -0.9)},
 }
 
 

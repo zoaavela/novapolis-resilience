@@ -66,3 +66,32 @@ export function useRequete() {
   }
   return [etat, lancer];
 }
+
+/**
+ * Relance `calcul` à chaque changement de `cles`, après un court délai (pas une
+ * requête par clic). Le résultat précédent reste affiché pendant le calcul pour
+ * que la page ne saute pas, et une réponse arrivée trop tard est ignorée.
+ */
+export function useCalculAuto(calcul, cles, actif = true) {
+  const [etat, setEtat] = useState({ chargement: false, donnees: null, erreur: null });
+  useEffect(() => {
+    if (!actif) return undefined;
+    let annule = false;
+    const minuteur = setTimeout(async () => {
+      setEtat((m) => ({ ...m, chargement: true, erreur: null }));
+      try {
+        const donnees = await calcul();
+        if (!annule) setEtat({ chargement: false, donnees, erreur: null });
+      } catch (e) {
+        if (!annule) setEtat({ chargement: false, donnees: null, erreur: e.message || 'Erreur inconnue' });
+      }
+    }, 300);
+    return () => {
+      annule = true;
+      clearTimeout(minuteur);
+    };
+    // `calcul` est recréé à chaque rendu : ce sont `cles` qui décident du recalcul.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actif, ...cles]);
+  return etat;
+}
