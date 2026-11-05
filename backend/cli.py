@@ -78,6 +78,10 @@ def cmd_benchmark(args) -> None:
 
     r = benchmarks.lancer(args.sortie, repetitions=args.repetitions)
     print(f"Écrit dans {args.sortie} : resultats.json et 3 graphiques ({r['repetitions']} répétitions)")
+    site = Path(__file__).resolve().parents[1] / "frontend" / "src" / "data" / "benchmarks.js"
+    if site.parent.is_dir():  # la page Benchmark du site lit ce fichier
+        benchmarks.ecrire_pour_le_site(r, site)
+        print(f"Page Benchmark du site mise à jour : {site}")
 
 
 def main() -> None:

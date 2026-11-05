@@ -166,6 +166,33 @@ def tracer(resultats: dict, dossier: Path) -> list[Path]:
     return fichiers
 
 
+def ecrire_pour_le_site(resultats: dict, chemin: str | Path) -> None:
+    """Recopie les mesures dans le fichier lu par la page Benchmark du site."""
+    def ligne(m: dict) -> dict:
+        d = {"algo": m["algo"], "V": m["V"], "E": m["E"],
+             "ms": round(m["moyenne_ms"], 3), "ecart": round(m["ecart_type_ms"], 3)}
+        if "degre" in m:
+            d["degre"] = m["degre"]
+        return d
+
+    donnees = {
+        "graine": resultats["graine"],
+        "repetitions": resultats["repetitions"],
+        "taille": [ligne(m) for m in resultats["taille"]],
+        "densite": [ligne(m) for m in resultats["densite"]],
+        "floyd": [ligne(m) for m in resultats["floyd"]],
+    }
+    entete = (
+        "// Mesures de performance, recopiées depuis resultats/benchmarks/resultats.json.\n"
+        "// Produites par : python backend/cli.py benchmark --sortie resultats/benchmarks\n"
+        "// Fichier écrit automatiquement par la commande benchmark : ne pas le modifier à la main.\n\n"
+    )
+    Path(chemin).write_text(
+        entete + "export const MESURES = " + json.dumps(donnees, ensure_ascii=False, indent=2) + ";\n",
+        encoding="utf-8",
+    )
+
+
 def lancer(dossier: str | Path, repetitions: int = 5, rapide: bool = False) -> dict:
     """Mesure, écrit resultats.json et les trois graphiques dans `dossier`."""
     dossier = Path(dossier)

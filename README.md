@@ -114,6 +114,10 @@ Le benchmark écrit `resultats/benchmarks/resultats.json` et trois images :
 `1_taille.png`, `2_densite.png`, `3_floyd.png`. Les temps dépendent de la
 machine, les tendances non.
 
+Elle met aussi à jour `frontend/src/data/benchmarks.js`, que lit la page
+Benchmark du site : il suffit ensuite de pousser pour que la page affiche les
+nouvelles mesures.
+
 ## API
 
 ```bash
