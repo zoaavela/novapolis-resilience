@@ -158,6 +158,9 @@ export default function Scenarios({ reseau, jeu }) {
   const isoles = lignes.filter((d) => d.apres === null).map((d) => d.site);
   const fermesPlan = mode === 'fichier' ? sc?.fermes ?? [] : fermes;
   const cheminPlan = mode === 'main' ? donneesMain?.trajet?.apres?.chemin ?? null : null;
+  // Le trajet d'avant n'est dessiné que s'il a changé : c'est le détour qu'on veut voir.
+  const avant = mode === 'main' ? donneesMain?.trajet?.avant?.chemin ?? null : null;
+  const cheminAncien = avant && avant.join() !== (cheminPlan ?? []).join() ? avant : null;
 
   const commandesFichier = (
     <div className="formulaire">
@@ -177,7 +180,8 @@ export default function Scenarios({ reseau, jeu }) {
   const commandesMain = (
     <div className="formulaire">
       <p className="aide">
-        Cliquez sur une route du plan pour la fermer, cliquez à nouveau pour la rouvrir. L’impact se recalcule tout seul.
+        Choisissez un trajet : il s’affiche en jaune. Cliquez ensuite sur une route du plan, sur le trajet ou ailleurs,
+        pour la fermer. Le trajet se recalcule aussitôt et montre le détour. Un second clic rouvre la route.
       </p>
       <div className="champ">
         <span className="etiquette-champ" id="sc-fermes">Routes fermées ({routesFermees.length})</span>
@@ -198,8 +202,8 @@ export default function Scenarios({ reseau, jeu }) {
         )}
       </div>
       {alerte && <Erreur>{alerte}</Erreur>}
-      <Selecteur id="sc-source" label="Trajet à suivre : départ" valeur={source} onChange={setSource}
-        options={casernes.map((s) => [s.id, `${s.id} · ${s.nom}`])} />
+      <Selecteur id="sc-source" label="Trajet : départ" valeur={source} onChange={setSource}
+        options={[...casernes, ...reseau.sites.filter((s) => s.type !== 'caserne')].map((s) => [s.id, `${s.id} · ${s.nom}`])} />
       <Selecteur id="sc-cible" label="Arrivée" valeur={cible} onChange={setCible}
         options={reseau.sites.map((s) => [s.id, `${s.id} · ${s.nom}`])} />
       <Segments legende="Algorithme" valeur={algo} onChange={setAlgo} options={ALGOS} />
@@ -223,12 +227,16 @@ export default function Scenarios({ reseau, jeu }) {
           fermes={fermesPlan}
           isoles={isoles}
           chemin={cheminPlan}
+          cheminAncien={cheminAncien}
           pointe={mode === 'fichier' && pointe}
           surClicRoute={mode === 'main' ? basculerRoute : null}
           description={mode === 'main' ? 'Plan de la ville : cliquez sur une route pour la fermer' : 'Plan de la ville'}
         />
       }
-      legende={<Legende elements={mode === 'fichier' && pointe ? [...LEGENDE_ROUTES, ['m-pointe', 'Route ralentie à l’heure de pointe']] : LEGENDE_ROUTES} />}
+      legende={<Legende elements={
+        mode === 'fichier' && pointe ? [...LEGENDE_ROUTES, ['m-pointe', 'Route ralentie à l’heure de pointe']]
+          : mode === 'main' && cheminAncien ? [...LEGENDE_ROUTES, ['m-ancien', 'Trajet avant la fermeture']]
+            : LEGENDE_ROUTES} />}
       resultats={
         <>
           {mode === 'main' && modeFactice && <Erreur>La fermeture à la main demande l’API.</Erreur>}

@@ -188,6 +188,7 @@ export default function Plan({
   reseau,
   mode = 'routes',
   chemin = null,
+  cheminAncien = null, // trajet d'avant une fermeture, en pointillés sous le nouveau
   fermes = [],
   niveaux = null,
   arbre = null,
@@ -458,8 +459,14 @@ export default function Plan({
           );
         })}
 
+        {/* Les trajets laissent passer les clics : on peut fermer une route située dessous. */}
+        {cheminAncien && cheminAncien.length > 1 && (
+          <g pointerEvents="none" aria-hidden="true">
+            <polyline points={cheminAncien.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeOpacity="0.55" strokeWidth="3" strokeDasharray="2 7" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
+          </g>
+        )}
         {chemin && chemin.length > 1 && (
-          <g>
+          <g pointerEvents="none">
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#FFC628" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeWidth="2" strokeDasharray="4 12" strokeLinecap="round" className="nv-trajet" {...nsl} />
