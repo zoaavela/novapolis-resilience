@@ -55,7 +55,7 @@ export default function Itineraire({ reseau, jeu }) {
           isoles={donnees && !donnees.accessible ? [cible] : []}
           description={donnees?.chemin ? `Trajet ${donnees.chemin.join(' puis ')}` : 'Plan de la ville'} />
       }
-      legende={<Legende elements={LEGENDE_ROUTES} />}
+      legende={<Legende elements={sc?.nom === 'Heure de pointe' ? [...LEGENDE_ROUTES, ['m-pointe', 'Route ralentie à l’heure de pointe']] : LEGENDE_ROUTES} />}
       resultats={
         <>
           {chargement && <Chargement />}

@@ -1,5 +1,7 @@
 """L'API renvoie les bons résultats sur la petite ville (docs/PETIT_GRAPHE.md)."""
 
+from pathlib import Path
+
 import pytest
 from api.main import app
 from fastapi.testclient import TestClient
@@ -78,3 +80,49 @@ def test_itineraire_floyd_identique_a_dijkstra():
         r = post("/itineraire", {"source": "C1", "cible": "Q4", "algo": algo}).json()
         assert r["duree"] == 28
         assert r["chemin"][0] == "C1" and r["chemin"][-1] == "Q4"
+
+def test_indicateurs_s1():
+    r = post("/scenario", {"scenario": "S1"}).json()["indicateurs"]
+    assert r["nb_demandes"] == 5
+    assert r["retard_max"] >= 1
+
+
+def test_valider_csv_correct_et_faux():
+    contenu = Path("data/petit/sites.csv").read_text(encoding="utf-8")
+    bon = client.post("/valider", json={"fichier": "sites", "contenu": contenu}).json()
+    assert bon["nb_erreurs"] == 0
+    faux = "u,v,temps_normal,temps_pointe,statut\nC1,ZZ,3,4,ouvert\n"
+    r = client.post("/valider", json={"fichier": "routes", "contenu": faux}).json()
+    assert r["nb_erreurs"] >= 1 and "ZZ" in r["erreurs"][0]
+
+
+def test_valider_refuse_les_gros_fichiers():
+    r = client.post("/valider", json={"fichier": "sites", "contenu": "x" * 1_300_000})
+    assert r.status_code == 413
+
+
+def test_circuits():
+    a = post("/circuits", {"cas": "accessible", "source": "S"}).json()
+    assert a["existe"] and a["accessible"] and a["bellman_ford"]["D"] == "-inf"
+    n = post("/circuits", {"cas": "non_accessible", "source": "S"}).json()
+    assert n["existe"] and n["accessible"] is False and n["bellman_ford"]["B"] == 5
+
+
+def test_fermeture_choisie_comme_S1():
+    """Fermer Q1 <-> H1 à la main donne le même résultat que le scénario S1."""
+    s1 = post("/scenario", {"scenario": "S1"}).json()
+    r = post("/fermeture", {"fermes": [["Q1", "H1"], ["H1", "Q1"]], "source": "C1", "cible": "Q4"}).json()
+    assert r["demandes"] == s1["demandes"]
+    assert r["trajet"]["avant"]["duree"] == 28
+    assert r["trajet"]["apres"]["duree"] == 29
+
+
+def test_fermeture_sans_arc_rien_ne_change():
+    r = post("/fermeture", {"fermes": []}).json()
+    assert r["indicateurs"]["nb_retardees"] == 0
+
+
+def test_fermeture_refuse_une_route_inconnue_et_trop_d_arcs():
+    assert client.post("/fermeture", json={"fermes": [["C1", "Q5"]]}).status_code == 422
+    trop = [["C1", "Q1"]] * 21
+    assert client.post("/fermeture", json={"fermes": trop}).status_code == 422

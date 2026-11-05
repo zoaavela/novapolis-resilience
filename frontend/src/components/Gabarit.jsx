@@ -6,11 +6,15 @@ const MODULES = [
   ['route', 'Itinéraire'],
   ['scenarios', 'Scénarios'],
   ['fiber', 'Fibre'],
+  ['circuits', 'Circuits'],
   ['data', 'Données'],
   ['about', 'À propos'],
 ];
 
 export { MODULES };
+
+// Barre d'onglets : les modules, puis Benchmark juste avant À propos.
+const ONGLETS = [...MODULES.slice(0, -1), ['benchmark', 'Benchmark'], MODULES.at(-1)];
 
 export default function Gabarit() {
   return (
@@ -24,7 +28,7 @@ export default function Gabarit() {
             <span className="marque-sous">Régulation des secours et du réseau de fibre</span>
           </Link>
           <nav aria-label="Modules" className="onglets">
-            {MODULES.map(([id, nom]) => (
+            {ONGLETS.map(([id, nom]) => (
               <NavLink key={id} to={`/${id}`} className="onglet">
                 {nom}
               </NavLink>

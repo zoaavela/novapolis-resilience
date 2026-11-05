@@ -181,8 +181,20 @@ def generer_ville(dossier: str | Path, graine: int = 42) -> dict[str, int]:
         {"scenario": "S1", "reseau": "routes", "u": u, "v": v, "action": "fermer", "valeur": ""}
         for u, v in avenue_arcs
     ]
+    # S2 : panne d'un tronçon de l'arbre couvrant qui dessert l'hôpital H1.
+    # Il doit être DANS l'arbre, sinon la panne ne coupe rien.
+    from .arbres import kruskal
+    from .graphe import Graphe
+
+    reseau_fibre = Graphe(oriente=False)
+    for site in sites:
+        reseau_fibre.ajouter_sommet(site["id"])
+    for f in fibre:
+        if f["statut"] == "disponible":
+            reseau_fibre.ajouter_arc(f["u"], f["v"], float(f["cost"]))
     hopital = ident[HOPITAUX[0]]
-    troncon = next(f for f in fibre if hopital in (f["u"], f["v"]) and f["statut"] == "disponible")
+    u, v, _ = next(a for a in kruskal(reseau_fibre).aretes if hopital in a[:2])
+    troncon = {"u": u, "v": v}
     scenarios.append({"scenario": "S2", "reseau": "fibre", "u": troncon["u"], "v": troncon["v"], "action": "panne", "valeur": ""})
     scenarios.append({"scenario": "S3", "reseau": "routes", "u": "*", "v": "*", "action": "pointe", "valeur": ""})
 

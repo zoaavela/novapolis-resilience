@@ -188,6 +188,7 @@ export default function Plan({
   reseau,
   mode = 'routes',
   chemin = null,
+  cheminAncien = null, // trajet d'avant une fermeture, en pointillés sous le nouveau
   fermes = [],
   niveaux = null,
   arbre = null,
@@ -195,6 +196,8 @@ export default function Plan({
   reparation = null,
   isoles = [],
   pointe = false,
+  surClicRoute = null, // (u, v, sens) => … : rend les routes cliquables (fermeture à la main)
+  libellePoids = null, // texte de l'interrupteur des poids, s'il faut le changer
   description = 'Plan de la ville de Novapolis',
 }) {
   const nbSites = reseau?.sites.length ?? 0;
@@ -205,6 +208,7 @@ export default function Plan({
   const [plein, setPlein] = useState(false); // plein écran
   const svgRef = useRef(null);
   const glisse = useRef(null);
+  const aGlisse = useRef(false);
 
   // Ctrl + molette (ou pincer sur un pavé tactile) = zoom. La molette seule
   // continue de faire défiler la page.
@@ -263,16 +267,18 @@ export default function Plan({
 
   function debutGlisse(e) {
     if (zoom === 1) return;
-    glisse.current = { x: e.clientX, y: e.clientY, cx: vx + vw / 2, cy: vy + vh / 2 };
+    glisse.current = { x: e.clientX, y: e.clientY, cx: vx + vw / 2, cy: vy + vh / 2, bouge: false };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function enGlisse(e) {
     const g = glisse.current;
     if (!g) return;
     const parPixel = vw / svgRef.current.getBoundingClientRect().width;
+    if (Math.hypot(e.clientX - g.x, e.clientY - g.y) > 4) g.bouge = true;
     setCentre({ x: g.cx - (e.clientX - g.x) * parPixel, y: g.cy - (e.clientY - g.y) * parPixel });
   }
   function finGlisse() {
+    aGlisse.current = glisse.current?.bouge ?? false; // un glisser ne doit pas fermer une route
     glisse.current = null;
   }
 
@@ -281,10 +287,14 @@ export default function Plan({
   if (mode === 'routes') {
     for (const r of reseau.routes) {
       const kk = cle(r.u, r.v);
-      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], ferme: false, scenario: false };
+      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], normal: [], ferme: false, scenario: false, fermeeDonnees: false };
       l.sens.push([r.u, r.v]);
       l.temps.push(pointe ? r.temps_pointe : r.temps_normal);
-      if (r.statut !== 'ouvert') l.ferme = true;
+      l.normal.push(r.temps_normal);
+      if (r.statut !== 'ouvert') {
+        l.ferme = true;
+        l.fermeeDonnees = true; // fermée dans les données : on ne peut pas la rouvrir ici
+      }
       if (fermesCles.has(`${r.u}>${r.v}`)) {
         l.ferme = true;
         l.scenario = true;
@@ -315,7 +325,7 @@ export default function Plan({
         <label className="interrupteur">
           <input type="checkbox" role="switch" checked={voirPoids} onChange={(e) => setVoirPoids(e.target.checked)} />
           <span className="interrupteur-piste" aria-hidden="true"><span className="interrupteur-bouton" /></span>
-          {mode === 'routes' ? `Temps des routes, en min${pointe ? ' (pointe)' : ''}` : 'Coûts de la fibre, en k€'}
+          {libellePoids ?? (mode === 'routes' ? `Temps des routes, en min${pointe ? ' (heure de pointe)' : ''}` : 'Coûts de la fibre, en k€')}
         </label>
         <div className="plan-zoom" role="group" aria-label="Zoom du plan">
           <button type="button" onClick={() => setZoom((z) => borner(z * 1.5, 1, 8))} aria-label="Zoomer">+</button>
@@ -373,11 +383,15 @@ export default function Plan({
             if (kk === repCle) trait = { stroke: '#FFC628', strokeWidth: 6 };
           } else if (l.ferme) {
             trait = { stroke: '#D7262B', strokeWidth: 2.5, strokeDasharray: '7 5' };
+          } else if (pointe && l.temps.some((t, i) => t > l.normal.at(i))) {
+            trait = { stroke: '#E07B00', strokeWidth: 3.5 }; // heure de pointe : route ralentie, en orange
           }
           const fleches = mode === 'routes' && !l.ferme;
           const poids = mode === 'routes' ? [...new Set(l.temps)].join(' / ') : String(l.cout);
           const infobulle = mode === 'routes'
-            ? l.sens.map(([u, v], i) => `${u} → ${v} : ${l.temps[i]} min`).join('\n') + (l.ferme ? '\nfermée' : '')
+            ? l.sens.map(([u, v], i) => (pointe
+              ? `${u} → ${v} : ${l.temps.at(i)} min en pointe (${l.normal.at(i)} min d'habitude, +${Math.round((l.temps.at(i) / l.normal.at(i) - 1) * 100)} %)`
+              : `${u} → ${v} : ${l.temps.at(i)} min`)).join('\n') + (l.ferme ? '\nfermée' : '')
             : `${l.u} – ${l.v} : ${l.cout} k€${l.ferme ? ' (indisponible)' : ''}`;
           const afficherPoids = mode === 'routes'
             ? poidsLisibles
@@ -386,16 +400,40 @@ export default function Plan({
           // Les pastilles sont dessinées plus tard, par-dessus le trajet surligné.
           if (afficherPoids) {
             pastilles.push(
-              <g key={`p-${kk}`} className="plan-poids">
+              <g key={`p-${kk}`} className={pointe && mode === 'routes' && !l.ferme ? 'plan-poids plan-poids-pointe' : 'plan-poids'}>
                 <rect x={mx - largeurPoids / 2} y={my - policePoids * 0.75} width={largeurPoids} height={policePoids * 1.5} rx={3 * taille} />
                 <text x={mx} y={my} style={{ fontSize: policePoids }}>{poids}</text>
               </g>,
             );
           }
 
+          const cliquable = surClicRoute && mode === 'routes' && !l.fermeeDonnees;
+          const basculer = () => {
+            if (aGlisse.current) {
+              aGlisse.current = false;
+              return;
+            }
+            surClicRoute(l.u, l.v, l.sens);
+          };
+          const interaction = cliquable
+            ? {
+                className: l.scenario ? 'plan-cliquable plan-cliquable-ferme' : 'plan-cliquable',
+                role: 'button',
+                tabIndex: 0,
+                'aria-label': `${l.scenario ? 'Rouvrir' : 'Fermer'} la route ${l.u} – ${l.v}`,
+                'aria-pressed': l.scenario,
+                onClick: basculer,
+                onKeyDown: (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    surClicRoute(l.u, l.v, l.sens);
+                  }
+                },
+              }
+            : {};
           return (
-            <g key={kk}>
-              <title>{infobulle}</title>
+            <g key={kk} {...interaction}>
+              <title>{cliquable ? `${infobulle}\nCliquer pour ${l.scenario ? 'rouvrir' : 'fermer'}` : infobulle}</title>
               {mode === 'routes' && estPont(a, b) && (
                 <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#8C6A4A" strokeWidth="9" {...nsl} />
               )}
@@ -404,6 +442,7 @@ export default function Plan({
               )}
               <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth="12" {...nsl} />
               <line
+                className="plan-trait"
                 x1={depart.x} y1={depart.y} x2={arrivee.x} y2={arrivee.y}
                 strokeLinecap="round"
                 markerEnd={fleches ? 'url(#fleche)' : undefined}
@@ -420,8 +459,14 @@ export default function Plan({
           );
         })}
 
+        {/* Les trajets laissent passer les clics : on peut fermer une route située dessous. */}
+        {cheminAncien && cheminAncien.length > 1 && (
+          <g pointerEvents="none" aria-hidden="true">
+            <polyline points={cheminAncien.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeOpacity="0.55" strokeWidth="3" strokeDasharray="2 7" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
+          </g>
+        )}
         {chemin && chemin.length > 1 && (
-          <g>
+          <g pointerEvents="none">
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#FFC628" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" {...nsl} />
             <polyline points={chemin.map((id) => `${pos[id].x},${pos[id].y}`).join(' ')} fill="none" stroke="#241B4B" strokeWidth="2" strokeDasharray="4 12" strokeLinecap="round" className="nv-trajet" {...nsl} />

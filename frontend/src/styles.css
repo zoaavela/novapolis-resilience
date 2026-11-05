@@ -318,6 +318,7 @@ a:hover {
   gap: 6px;
 }
 .champ label,
+.etiquette-champ,
 .segments legend,
 .cases legend {
   font-size: 13px;
@@ -599,6 +600,8 @@ tbody tr:last-child th {
 .m-arbre { width: 22px; height: 6px; background: var(--vert); border: 0; }
 .m-possible { width: 22px; height: 0; border: 0; border-top: 2px dashed #b8b5cc; }
 .m-ferme { width: 22px; height: 0; border: 0; border-top: 4px dashed var(--rouge); }
+.m-ancien { width: 22px; height: 0; border: 0; border-top: 3px dotted var(--nuit-2); }
+.m-pointe { width: 22px; height: 4px; background: #e07b00; border: 0; }
 
 /* ---------- Accueil plein écran ---------- */
 .accueil-plein {
@@ -1349,4 +1352,194 @@ tbody tr:last-child th {
   .nv-courant {
     animation: none;
   }
+}
+
+.liste-erreurs {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.liste-erreurs li {
+  margin-bottom: 4px;
+}
+
+/* ---------- Page Benchmark ---------- */
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  max-width: 1100px;
+}
+.bench > * {
+  min-width: 0;
+}
+.bench-tete,
+.bench-bloc {
+  padding: 24px 28px;
+}
+.bench-tete h1 {
+  margin: 0 0 8px;
+  font-family: var(--titre);
+  font-size: 34px;
+}
+.bench-lead {
+  margin: 0 0 20px;
+  font-size: 18px;
+  max-width: 62ch;
+}
+.bench-tuiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.bench-constat {
+  margin: 12px 0 16px;
+  font-size: 16px;
+  max-width: 70ch;
+}
+.bench-liste {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  max-width: 75ch;
+}
+.bench-liste li {
+  margin-bottom: 8px;
+}
+.graphique {
+  position: relative;
+  width: 100%;
+  border: 2px solid var(--nuit);
+  background: var(--blanc);
+  padding: 12px;
+  box-sizing: border-box;
+}
+.bench-pastille {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 2px solid var(--nuit);
+}
+.bench-complexite {
+  font-family: var(--chiffres);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.bench-pied code {
+  font-family: var(--chiffres);
+}
+@media (max-width: 760px) {
+  .bench-tete,
+  .bench-bloc {
+    padding: 18px 16px;
+  }
+  .bench-tete h1 {
+    font-size: 28px;
+  }
+  .bench-tuiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .graphique {
+    height: 320px !important;
+    padding: 4px;
+  }
+}
+
+/* Routes cliquables (fermeture à la main) */
+.plan-cliquable {
+  cursor: pointer;
+  outline: none;
+}
+.plan-cliquable:hover .plan-trait,
+.plan-cliquable:focus-visible .plan-trait {
+  stroke: #d99a00;
+  stroke-width: 5px;
+}
+.plan-cliquable-ferme:hover .plan-trait,
+.plan-cliquable-ferme:focus-visible .plan-trait {
+  stroke: var(--vert);
+}
+.fermetures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fermeture {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 10px;
+  font-family: var(--chiffres);
+  font-size: 13px;
+  background: var(--rouge-pale);
+  border: 2px solid var(--rouge);
+  color: var(--rouge-texte);
+}
+.fermeture button {
+  min-width: 28px;
+  height: 26px;
+  border: 0;
+  background: var(--rouge);
+  color: var(--blanc);
+  font-weight: 700;
+  cursor: pointer;
+}
+.fermeture button:focus-visible {
+  outline: 3px solid var(--jaune);
+}
+.trajet-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.trajet-compare .chemin-texte {
+  margin: 6px 0 0;
+  font-family: var(--chiffres);
+  font-size: 12px;
+  color: var(--nuit-2);
+  word-break: break-word;
+}
+.lien-bouton {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nuit);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.lien-bouton:focus-visible {
+  outline: 3px solid var(--jaune);
+}
+.plan-poids-pointe rect {
+  stroke: #e07b00;
+  stroke-width: 1.5px;
+}
+.plan-poids-pointe text {
+  fill: #9a4f00;
+}
+.verdict {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: var(--blanc);
+  border: 2px solid var(--nuit);
+  box-shadow: var(--ombre-petite);
+}
+.verdict p {
+  margin: 0 0 6px;
+}
+.verdict p:last-child {
+  margin-bottom: 0;
+}
+.verdict-alerte {
+  background: var(--rouge-pale);
+  border-color: var(--rouge);
 }

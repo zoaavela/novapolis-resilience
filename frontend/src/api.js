@@ -126,3 +126,41 @@ export async function fibre({ jeu = 'petit', algo = 'kruskal', panne = null }) {
 }
 
 export const modeFactice = !API;
+
+/**
+ * POST /valider { jeu, fichier: 'sites' | 'routes' | ..., contenu }
+ * -> { fichier, nb_erreurs, erreurs: [texte] }
+ */
+export async function validerFichier({ jeu = 'petit', fichier, contenu }) {
+  if (!API) {
+    await attendre(300);
+    throw new Error('La vérification des fichiers demande l’API.');
+  }
+  return appel('/valider', { jeu, fichier, contenu });
+}
+
+/**
+ * POST /circuits { cas: 'accessible' | 'non_accessible', source }
+ * -> { reseau, existe, circuit, poids, accessible, non_bornes,
+ *      bellman_ford: { site: nombre | '-inf' | null }, floyd_warshall: idem }
+ */
+export async function circuits({ cas = 'accessible', source = 'S' }) {
+  if (!API) {
+    await attendre(300);
+    throw new Error('Les circuits absorbants demandent l’API.');
+  }
+  return appel('/circuits', { cas, source });
+}
+
+/**
+ * POST /fermeture { jeu, fermes: [[u, v]], algo, source?, cible? }
+ * -> la même réponse que /scenario, plus
+ *    trajet: { avant: {accessible, chemin, duree, nb_arcs}, apres: {...} } si source et cible
+ */
+export async function fermeture({ jeu = 'petit', fermes, algo = 'dijkstra', source, cible }) {
+  if (!API) {
+    await attendre(300);
+    throw new Error('La fermeture de routes à la main demande l’API.');
+  }
+  return appel('/fermeture', { jeu, fermes, algo, source, cible });
+}
