@@ -151,3 +151,16 @@ export async function circuits({ cas = 'accessible', source = 'S' }) {
   }
   return appel('/circuits', { cas, source });
 }
+
+/**
+ * POST /fermeture { jeu, fermes: [[u, v]], algo, source?, cible? }
+ * -> la même réponse que /scenario, plus
+ *    trajet: { avant: {accessible, chemin, duree, nb_arcs}, apres: {...} } si source et cible
+ */
+export async function fermeture({ jeu = 'petit', fermes, algo = 'dijkstra', source, cible }) {
+  if (!API) {
+    await attendre(300);
+    throw new Error('La fermeture de routes à la main demande l’API.');
+  }
+  return appel('/fermeture', { jeu, fermes, algo, source, cible });
+}

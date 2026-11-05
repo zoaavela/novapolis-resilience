@@ -318,6 +318,7 @@ a:hover {
   gap: 6px;
 }
 .champ label,
+.etiquette-champ,
 .segments legend,
 .cases legend {
   font-size: 13px;
@@ -1441,4 +1442,78 @@ tbody tr:last-child th {
     height: 320px !important;
     padding: 4px;
   }
+}
+
+/* Routes cliquables (fermeture à la main) */
+.plan-cliquable {
+  cursor: pointer;
+  outline: none;
+}
+.plan-cliquable:hover .plan-trait,
+.plan-cliquable:focus-visible .plan-trait {
+  stroke: #d99a00;
+  stroke-width: 5px;
+}
+.plan-cliquable-ferme:hover .plan-trait,
+.plan-cliquable-ferme:focus-visible .plan-trait {
+  stroke: var(--vert);
+}
+.fermetures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fermeture {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 10px;
+  font-family: var(--chiffres);
+  font-size: 13px;
+  background: var(--rouge-pale);
+  border: 2px solid var(--rouge);
+  color: var(--rouge-texte);
+}
+.fermeture button {
+  min-width: 28px;
+  height: 26px;
+  border: 0;
+  background: var(--rouge);
+  color: var(--blanc);
+  font-weight: 700;
+  cursor: pointer;
+}
+.fermeture button:focus-visible {
+  outline: 3px solid var(--jaune);
+}
+.trajet-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.trajet-compare .chemin-texte {
+  margin: 6px 0 0;
+  font-family: var(--chiffres);
+  font-size: 12px;
+  color: var(--nuit-2);
+  word-break: break-word;
+}
+.lien-bouton {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nuit);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.lien-bouton:focus-visible {
+  outline: 3px solid var(--jaune);
 }

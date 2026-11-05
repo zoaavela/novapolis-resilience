@@ -195,6 +195,7 @@ export default function Plan({
   reparation = null,
   isoles = [],
   pointe = false,
+  surClicRoute = null, // (u, v, sens) => … : rend les routes cliquables (fermeture à la main)
   description = 'Plan de la ville de Novapolis',
 }) {
   const nbSites = reseau?.sites.length ?? 0;
@@ -205,6 +206,7 @@ export default function Plan({
   const [plein, setPlein] = useState(false); // plein écran
   const svgRef = useRef(null);
   const glisse = useRef(null);
+  const aGlisse = useRef(false);
 
   // Ctrl + molette (ou pincer sur un pavé tactile) = zoom. La molette seule
   // continue de faire défiler la page.
@@ -263,16 +265,18 @@ export default function Plan({
 
   function debutGlisse(e) {
     if (zoom === 1) return;
-    glisse.current = { x: e.clientX, y: e.clientY, cx: vx + vw / 2, cy: vy + vh / 2 };
+    glisse.current = { x: e.clientX, y: e.clientY, cx: vx + vw / 2, cy: vy + vh / 2, bouge: false };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function enGlisse(e) {
     const g = glisse.current;
     if (!g) return;
     const parPixel = vw / svgRef.current.getBoundingClientRect().width;
+    if (Math.hypot(e.clientX - g.x, e.clientY - g.y) > 4) g.bouge = true;
     setCentre({ x: g.cx - (e.clientX - g.x) * parPixel, y: g.cy - (e.clientY - g.y) * parPixel });
   }
   function finGlisse() {
+    aGlisse.current = glisse.current?.bouge ?? false; // un glisser ne doit pas fermer une route
     glisse.current = null;
   }
 
@@ -281,10 +285,13 @@ export default function Plan({
   if (mode === 'routes') {
     for (const r of reseau.routes) {
       const kk = cle(r.u, r.v);
-      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], ferme: false, scenario: false };
+      const l = liaisons.get(kk) ?? { u: r.u, v: r.v, sens: [], temps: [], ferme: false, scenario: false, fermeeDonnees: false };
       l.sens.push([r.u, r.v]);
       l.temps.push(pointe ? r.temps_pointe : r.temps_normal);
-      if (r.statut !== 'ouvert') l.ferme = true;
+      if (r.statut !== 'ouvert') {
+        l.ferme = true;
+        l.fermeeDonnees = true; // fermée dans les données : on ne peut pas la rouvrir ici
+      }
       if (fermesCles.has(`${r.u}>${r.v}`)) {
         l.ferme = true;
         l.scenario = true;
@@ -393,9 +400,33 @@ export default function Plan({
             );
           }
 
+          const cliquable = surClicRoute && mode === 'routes' && !l.fermeeDonnees;
+          const basculer = () => {
+            if (aGlisse.current) {
+              aGlisse.current = false;
+              return;
+            }
+            surClicRoute(l.u, l.v, l.sens);
+          };
+          const interaction = cliquable
+            ? {
+                className: l.scenario ? 'plan-cliquable plan-cliquable-ferme' : 'plan-cliquable',
+                role: 'button',
+                tabIndex: 0,
+                'aria-label': `${l.scenario ? 'Rouvrir' : 'Fermer'} la route ${l.u} – ${l.v}`,
+                'aria-pressed': l.scenario,
+                onClick: basculer,
+                onKeyDown: (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    surClicRoute(l.u, l.v, l.sens);
+                  }
+                },
+              }
+            : {};
           return (
-            <g key={kk}>
-              <title>{infobulle}</title>
+            <g key={kk} {...interaction}>
+              <title>{cliquable ? `${infobulle}\nCliquer pour ${l.scenario ? 'rouvrir' : 'fermer'}` : infobulle}</title>
               {mode === 'routes' && estPont(a, b) && (
                 <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#8C6A4A" strokeWidth="9" {...nsl} />
               )}
@@ -404,6 +435,7 @@ export default function Plan({
               )}
               <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth="12" {...nsl} />
               <line
+                className="plan-trait"
                 x1={depart.x} y1={depart.y} x2={arrivee.x} y2={arrivee.y}
                 strokeLinecap="round"
                 markerEnd={fleches ? 'url(#fleche)' : undefined}

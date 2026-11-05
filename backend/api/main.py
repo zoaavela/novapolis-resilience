@@ -185,6 +185,14 @@ class DemandeScenario(BaseModel):
     algo: Literal["dijkstra", "bellman-ford", "floyd-warshall"] = "dijkstra"
 
 
+class DemandeFermeture(BaseModel):
+    jeu: Jeu = "petit"
+    fermes: list[tuple[str, str]] = Field(default_factory=list, max_length=20)
+    algo: Literal["dijkstra", "bellman-ford", "floyd-warshall"] = "dijkstra"
+    source: str | None = Field(default=None, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
+    cible: str | None = Field(default=None, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
+
+
 class DemandeValidation(BaseModel):
     jeu: Jeu = "petit"
     fichier: Literal["sites", "routes", "fibre", "demandes", "scenarios"]
@@ -266,23 +274,8 @@ def itineraire(req: DemandeItineraire) -> dict:
     verifier_site(v, req.cible)
     graphe = routes_du_scenario(v, req.scenario)
 
-    if req.algo == "floyd-warshall":
-        # Floyd-Warshall calcule toutes les paires d'un coup : on lit la ligne de la source.
-        chemin = chemin_floyd(chemins.floyd_warshall(graphe), req.source, req.cible)
-    else:
-        algo = {"dijkstra": chemins.dijkstra, "bellman-ford": chemins.bellman_ford}[req.algo]
-        resultat = algo(graphe, req.source)
-        chemin = chemins.reconstruire_chemin(resultat, req.cible)
-
-    if chemin is None:
-        return {"accessible": False, "chemin": None, "duree": None, "nb_arcs": 0, "algo": req.algo}
-    return {
-        "accessible": True,
-        "chemin": chemin.sommets,
-        "duree": chemin.duree,
-        "nb_arcs": chemin.nb_arcs,
-        "algo": req.algo,
-    }
+    # Floyd-Warshall calcule toutes les paires d'un coup : trajet() lit la ligne de la source.
+    return {**trajet(graphe, req.algo, req.source, req.cible), "algo": req.algo}
 
 
 @app.post("/accessibilite")
@@ -315,12 +308,13 @@ def temps_depuis_casernes(v: Ville, graphe, algo: str) -> dict[str, tuple[float,
     return meilleur
 
 
-@app.post("/scenario")
-def scenario(req: DemandeScenario) -> dict:
-    """Temps d'intervention de chaque demande, avant et après le scénario."""
-    v = ville(req.jeu)
-    avant = temps_depuis_casernes(v, v.routes_normal, req.algo)
-    apres = temps_depuis_casernes(v, routes_du_scenario(v, req.scenario), req.algo)
+def impact(v: Ville, graphe_apres, algo: str) -> dict:
+    """Temps de chaque demande avant et après, et indicateurs de résilience.
+
+    Sert aux scénarios du fichier comme aux fermetures choisies sur le plan.
+    """
+    avant = temps_depuis_casernes(v, v.routes_normal, algo)
+    apres = temps_depuis_casernes(v, graphe_apres, algo)
 
     # Indicateurs de résilience (module 5, Elio).
     impacts = indicateurs.comparer(
@@ -355,8 +349,53 @@ def scenario(req: DemandeScenario) -> dict:
                 "apres": minutes(apres[d.origine][0]),
             }
             for d in v.demandes
-        ]
+        ],
     }
+
+
+@app.post("/scenario")
+def scenario(req: DemandeScenario) -> dict:
+    """Temps d'intervention de chaque demande, avant et après le scénario."""
+    v = ville(req.jeu)
+    return impact(v, routes_du_scenario(v, req.scenario), req.algo)
+
+
+def trajet(graphe, algo: str, source: str, cible: str) -> dict:
+    """Le plus court chemin source -> cible, au format de /itineraire."""
+    if algo == "floyd-warshall":
+        chemin = chemin_floyd(chemins.floyd_warshall(graphe), source, cible)
+    else:
+        f = {"dijkstra": chemins.dijkstra, "bellman-ford": chemins.bellman_ford}[algo]
+        chemin = chemins.reconstruire_chemin(f(graphe, source), cible)
+    if chemin is None:
+        return {"accessible": False, "chemin": None, "duree": None, "nb_arcs": 0}
+    return {"accessible": True, "chemin": chemin.sommets, "duree": chemin.duree, "nb_arcs": chemin.nb_arcs}
+
+
+@app.post("/fermeture")
+def fermeture(req: DemandeFermeture) -> dict:
+    """Fermeture choisie sur le plan : on ferme ces arcs sur une copie de la ville,
+    puis on mesure l'impact sur toutes les demandes, comme pour un scénario.
+
+    Si un départ et une arrivée sont donnés, on renvoie aussi le trajet avant et
+    après la fermeture.
+    """
+    v = ville(req.jeu)
+    for u, w in req.fermes:
+        if not v.routes_normal.a_arc(u, w):
+            raise HTTPException(status_code=422, detail=f"La route {u} → {w} n'existe pas ou est déjà fermée.")
+    actions = [donnees.Action("routes", u, w, "fermer", None) for u, w in req.fermes]
+    graphe = scenarios.appliquer(v.routes_normal, actions, "routes") if actions else v.routes_normal
+    reponse = impact(v, graphe, req.algo)
+    reponse["fermes"] = [[u, w] for u, w in req.fermes]
+    if req.source and req.cible:
+        verifier_site(v, req.source)
+        verifier_site(v, req.cible)
+        reponse["trajet"] = {
+            "avant": trajet(v.routes_normal, req.algo, req.source, req.cible),
+            "apres": trajet(graphe, req.algo, req.source, req.cible),
+        }
+    return reponse
 
 
 @app.post("/fibre")
