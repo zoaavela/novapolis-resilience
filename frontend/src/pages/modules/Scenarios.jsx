@@ -24,6 +24,7 @@ export default function Scenarios({ reseau, jeu }) {
   const sc = reseau.scenarios.find((s) => s.id === scenario);
 
   const lignes = donnees?.demandes ?? [];
+  const ind = donnees?.indicateurs; // absent en mode démonstration
   const inaccessibles = lignes.filter((d) => d.apres === null).length;
   const retards = lignes.filter((d) => d.avant !== null && d.apres !== null).map((d) => d.apres - d.avant);
   const retardMax = retards.length ? Math.max(...retards) : 0;
@@ -54,10 +55,20 @@ export default function Scenarios({ reseau, jeu }) {
           {!chargement && !erreur && !donnees && <Vide>Choisissez une perturbation et appliquez-la pour voir son impact.</Vide>}
           {donnees && (
             <>
-              <div className="tuiles">
-                <Tuile label="Inaccessibles" valeur={`${inaccessibles} / ${lignes.length}`} alerte={inaccessibles > 0} />
-                <Tuile label="Retard max" valeur={`+${retardMax}`} unite="min" />
-              </div>
+              {ind ? (
+                <div className="tuiles">
+                  <Tuile label="Demandes inaccessibles" valeur={`${ind.nb_inaccessibles} / ${ind.nb_demandes}`} alerte={ind.nb_inaccessibles > 0} />
+                  <Tuile label="Devenues inaccessibles" valeur={ind.nb_devenues_inaccessibles} alerte={ind.nb_devenues_inaccessibles > 0} />
+                  <Tuile label="Retard moyen" valeur={`+${ind.retard_moyen}`} unite="min" />
+                  <Tuile label="Retard max" valeur={`+${ind.retard_max}`} unite={`min (+${Math.round(ind.retard_relatif_max * 100)} %)`} />
+                  <Tuile label="Sites sensibles accessibles" valeur={`${ind.sensibles_accessibles} / ${ind.nb_sensibles}`} alerte={ind.sensibles_accessibles < ind.nb_sensibles} />
+                </div>
+              ) : (
+                <div className="tuiles">
+                  <Tuile label="Inaccessibles" valeur={`${inaccessibles} / ${lignes.length}`} alerte={inaccessibles > 0} />
+                  <Tuile label="Retard max" valeur={`+${retardMax}`} unite="min" />
+                </div>
+              )}
               <div className="tableau-boite">
                 <table>
                   <caption className="visuellement-cache">Impact du scénario sur chaque demande</caption>
@@ -83,7 +94,7 @@ export default function Scenarios({ reseau, jeu }) {
                     })}
                   </tbody>
                 </table>
-                <p className="tableau-note">Temps en minutes, depuis la caserne la plus rapide.</p>
+                <p className="tableau-note">Temps en minutes, depuis la caserne la plus rapide. Le retard moyen ne compte que les demandes accessibles avant et après. Sites sensibles : hôpitaux, écoles, centres télécom.</p>
               </div>
             </>
           )}

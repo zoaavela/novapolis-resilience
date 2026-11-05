@@ -9,12 +9,14 @@ import Itineraire from './modules/Itineraire.jsx';
 import Scenarios from './modules/Scenarios.jsx';
 import Fibre from './modules/Fibre.jsx';
 import Donnees from './modules/Donnees.jsx';
+import Circuits from './modules/Circuits.jsx';
 
 const MODULES = {
   access: { titre: 'Accessibilité', composant: Accessibilite, desc: 'Quels sites les casernes de Novapolis peuvent-elles atteindre ?' },
   route: { titre: 'Itinéraire', composant: Itineraire, desc: 'Le trajet le plus rapide d’une caserne à un site, selon trois algorithmes.' },
   scenarios: { titre: 'Scénarios', composant: Scenarios, desc: 'Ce que coûte une route fermée : retards et quartiers coupés.' },
   fiber: { titre: 'Fibre', composant: Fibre, desc: 'Le réseau de fibre le moins cher, et sa réparation en cas de panne.' },
+  circuits: { titre: 'Circuits', composant: Circuits, desc: 'Détection des circuits absorbants sur des graphes de test à poids négatifs.' },
   data: { titre: 'Données', composant: Donnees, desc: 'Les jeux de données de Novapolis et leur format.' },
   about: { titre: 'À propos', composant: null, desc: 'Pourquoi Novapolis, le modèle, les algorithmes et les données.' },
 };

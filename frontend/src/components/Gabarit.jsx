@@ -6,6 +6,7 @@ const MODULES = [
   ['route', 'Itinéraire'],
   ['scenarios', 'Scénarios'],
   ['fiber', 'Fibre'],
+  ['circuits', 'Circuits'],
   ['data', 'Données'],
   ['about', 'À propos'],
 ];

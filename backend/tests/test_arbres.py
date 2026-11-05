@@ -31,3 +31,25 @@ def test_panne_H1_E1(fibre):
     u, v, cout = reparation
     assert {u, v} == {"Q3", "E1"}
     assert cout == 7
+
+
+@pytest.mark.parametrize("algo", [arbres.kruskal, arbres.prim])
+def test_foret_si_non_connexe(algo):
+    """Deux morceaux sans lien : une forêt de deux arbres."""
+    from novapolis.graphe import Graphe
+
+    g = Graphe(oriente=False)
+    for s in "ABCDE":
+        g.ajouter_sommet(s)
+    g.ajouter_arc("A", "B", 1)
+    g.ajouter_arc("B", "C", 2)
+    g.ajouter_arc("D", "E", 3)
+    r = algo(g)
+    assert r.cout_total == 6
+    assert sorted(sorted(c) for c in r.composantes) == [["A", "B", "C"], ["D", "E"]]
+
+
+def test_panne_hors_arbre_refusee(fibre):
+    arbre = arbres.kruskal(fibre)
+    with pytest.raises(ValueError):
+        arbres.reparer_panne(fibre, arbre, "T1", "Q4")

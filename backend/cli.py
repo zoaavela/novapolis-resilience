@@ -5,6 +5,8 @@ Exemples :
     python backend/cli.py chemin --donnees data/petit --source C1 --cible Q4 --algo dijkstra
     python backend/cli.py accessibilite --donnees data/petit --sources C1 C2
     python backend/cli.py arbre --donnees data/petit --algo kruskal
+    python backend/cli.py generer --type ville --sortie data/ville --graine 42
+    python backend/cli.py benchmark --sortie resultats/benchmarks
 """
 
 from __future__ import annotations
@@ -71,6 +73,13 @@ def cmd_generer(args) -> None:
         comptes = generateur.generer_aleatoire(args.sortie, n=args.n, degre=args.degre, graine=args.graine)
     print(f"Écrit dans {args.sortie} : {comptes}")
 
+def cmd_benchmark(args) -> None:
+    from novapolis import benchmarks
+
+    r = benchmarks.lancer(args.sortie, repetitions=args.repetitions)
+    print(f"Écrit dans {args.sortie} : resultats.json et 3 graphiques ({r['repetitions']} répétitions)")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="novapolis")
     sous = p.add_subparsers(dest="commande", required=True)
@@ -104,6 +113,11 @@ def main() -> None:
     s.add_argument("--n", type=int, default=1000, help="nombre de sommets (aleatoire)")
     s.add_argument("--degre", type=int, default=4, help="voisins par sommet (aleatoire)")
     s.set_defaults(func=cmd_generer)
+
+    s = sous.add_parser("benchmark", help="mesurer les algorithmes et tracer les graphiques")
+    s.add_argument("--sortie", default="resultats/benchmarks", help="dossier des résultats")
+    s.add_argument("--repetitions", type=int, default=5)
+    s.set_defaults(func=cmd_benchmark)
 
     args = p.parse_args()
     try:

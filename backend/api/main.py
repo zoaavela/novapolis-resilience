@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -20,7 +21,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from novapolis import arbres, chemins, donnees, parcours, scenarios
+from novapolis import arbres, chemins, donnees, indicateurs, parcours, scenarios
 from novapolis.resultats import Chemin
 from pydantic import BaseModel, Field
 
@@ -49,6 +50,18 @@ async def entetes_securite(request: Request, call_next):
     reponse.headers["Referrer-Policy"] = "no-referrer"
     reponse.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return reponse
+
+
+TAILLE_MAX_CORPS = 1_200_000  # octets : un CSV de 1 Mo plus l'enveloppe JSON
+
+
+@app.middleware("http")
+async def limiter_taille(request: Request, call_next):
+    """Refuse les requêtes trop grosses avant même de les lire (envoi de fichiers)."""
+    taille = request.headers.get("content-length")
+    if taille is not None and (not taille.isdigit() or int(taille) > TAILLE_MAX_CORPS):
+        return JSONResponse(status_code=413, content={"detail": "Fichier trop volumineux (1 Mo au plus)."})
+    return await call_next(request)
 
 
 @app.exception_handler(NotImplementedError)
@@ -170,6 +183,17 @@ class DemandeScenario(BaseModel):
     jeu: Jeu = "petit"
     scenario: str = IdScenario
     algo: Literal["dijkstra", "bellman-ford", "floyd-warshall"] = "dijkstra"
+
+
+class DemandeValidation(BaseModel):
+    jeu: Jeu = "petit"
+    fichier: Literal["sites", "routes", "fibre", "demandes", "scenarios"]
+    contenu: str = Field(min_length=1, max_length=1_000_000)
+
+
+class DemandeCircuit(BaseModel):
+    cas: Literal["accessible", "non_accessible"] = "accessible"
+    source: str = IdSite
 
 
 class DemandeFibre(BaseModel):
@@ -297,7 +321,29 @@ def scenario(req: DemandeScenario) -> dict:
     v = ville(req.jeu)
     avant = temps_depuis_casernes(v, v.routes_normal, req.algo)
     apres = temps_depuis_casernes(v, routes_du_scenario(v, req.scenario), req.algo)
+
+    # Indicateurs de résilience (module 5, Elio).
+    impacts = indicateurs.comparer(
+        {s: t for s, (t, _) in avant.items()},
+        {s: t for s, (t, _) in apres.items()},
+        demandes=v.demandes,
+        casernes={s: c for s, (_, c) in apres.items()},
+    )
+    bilan = indicateurs.resumer(impacts)
+    sensibles = [s for s, i in v.sites.items() if i["type"] in ("hopital", "ecole", "telecom")]
+    sensibles_ok = sum(1 for s in sensibles if math.isfinite(apres[s][0]))
     return {
+        "indicateurs": {
+            "nb_demandes": bilan.nb_demandes,
+            "nb_inaccessibles": bilan.nb_inaccessibles,
+            "nb_devenues_inaccessibles": bilan.nb_devenues_inaccessibles,
+            "nb_retardees": bilan.nb_retardees,
+            "retard_moyen": round(bilan.retard_moyen, 2),
+            "retard_max": bilan.retard_max,
+            "retard_relatif_max": round(bilan.retard_relatif_max, 4),
+            "sensibles_accessibles": sensibles_ok,
+            "nb_sensibles": len(sensibles),
+        },
         "demandes": [
             {
                 "id": d.id,
@@ -339,3 +385,80 @@ def fibre(req: DemandeFibre) -> dict:
             reponse["reparation"] = list(rep)
             reponse["nouveau_cout"] = arbre.cout_total - poids_panne + rep[2]
     return reponse
+
+@app.post("/valider")
+def valider(req: DemandeValidation) -> dict:
+    """Vérifie un CSV envoyé par le site avec le validateur d'Elio.
+
+    Le fichier reçu remplace celui du même nom dans une copie du jeu choisi :
+    on peut ainsi vérifier un routes.csv contre les sites existants. Tout se
+    passe dans un dossier temporaire, effacé juste après. Rien n'est gardé.
+    """
+    v = JEUX[req.jeu]
+    with tempfile.TemporaryDirectory() as tmp:
+        dossier = Path(tmp)
+        for nom in ("sites", "routes", "fibre", "demandes", "scenarios"):
+            source = v / f"{nom}.csv"
+            if nom == req.fichier:
+                (dossier / f"{nom}.csv").write_text(req.contenu, encoding="utf-8")
+            elif source.exists():
+                (dossier / f"{nom}.csv").write_bytes(source.read_bytes())
+        erreurs = donnees.valider(dossier)
+    return {"fichier": f"{req.fichier}.csv", "nb_erreurs": len(erreurs), "erreurs": erreurs[:50]}
+
+
+DOSSIER_TESTS = DOSSIER_DATA / "tests"
+
+# Positions pour dessiner les graphes de test (les CSV les mettent tous sur une ligne).
+DISPOSITION = {
+    "accessible": {"S": (0, 1), "A": (2, 1), "B": (3.5, 2.2), "C": (3.5, -0.2), "D": (5.5, -0.2)},
+    "non_accessible": {"S": (0, 2), "A": (2, 2), "B": (4, 2), "C": (1, 0), "D": (3, 0), "E": (2, -1.4)},
+}
+
+
+@app.post("/circuits")
+def circuits(req: DemandeCircuit) -> dict:
+    """Module 3 : graphes de test à poids négatifs (Elio).
+
+    Ces poids négatifs ne sont pas des durées réelles : ils servent seulement
+    à vérifier que Bellman-Ford et Floyd-Warshall détectent les circuits
+    absorbants.
+    """
+    sites = donnees.charger_sites(DOSSIER_TESTS / "absorbant_sites.csv")
+    fichier = DOSSIER_TESTS / f"absorbant_{req.cas}.csv"
+    graphe = donnees.charger_routes(fichier, sites)
+    if req.source not in sites:
+        raise HTTPException(status_code=404, detail=f"Site inconnu : {req.source}")
+    r = chemins.diagnostiquer_circuit(graphe, req.source)
+    bf = chemins.bellman_ford(graphe, req.source)
+    fw = chemins.floyd_warshall(graphe)
+
+    def lisible(d: float) -> float | str | None:
+        if d == -math.inf:
+            return "-inf"
+        return d if math.isfinite(d) else None
+
+    utilises = {x for a, b, _ in graphe.arcs() for x in (a, b)}  # sites présents dans ce graphe
+    return {
+        "reseau": {
+            "sites": [
+                {"id": s, "nom": i["nom"], "type": "quartier",
+                 "x": DISPOSITION[req.cas][s][0], "y": DISPOSITION[req.cas][s][1]}
+                for s, i in sites.items() if s in utilises
+            ],
+            "routes": [
+                {"u": a, "v": b, "temps_normal": w, "temps_pointe": w, "statut": "ouvert"}
+                for a, b, w in graphe.arcs()
+            ],
+            "fibre": [],
+            "demandes": [],
+            "scenarios": [],
+        },
+        "existe": r.existe,
+        "circuit": r.circuit,
+        "poids": r.poids,
+        "accessible": r.accessible_depuis_source,
+        "non_bornes": sorted(r.sommets_non_bornes),
+        "bellman_ford": {s: lisible(d) for s, d in sorted(bf.distances.items()) if s in utilises},
+        "floyd_warshall": {s: lisible(d) for s, d in sorted(fw.distances[req.source].items()) if s in utilises},
+    }
